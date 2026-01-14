@@ -1,0 +1,48 @@
+[2026-01-14 17:48:05.878 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:05.880 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:05.880 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:05.880 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:05.880 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:05.881 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:05.881 INFO  ws] Starting workspace tool suite
+[2026-01-14 17:48:05.891 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:05.891 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:12.780 INFO  workspace::logging] Completed refactor in 6.89s
+[2026-01-14 17:48:12.780 INFO  workspace::logging] Completed refactor in 6.89s
+[2026-01-14 17:48:12.780 INFO  ws] Workspace tool completed successfully
+[2026-01-14 17:48:24.005 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:24.005 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:24.005 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:24.005 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:24.005 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:24.005 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:24.005 INFO  ws] Starting workspace tool suite
+[2026-01-14 17:48:24.010 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:24.010 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:24.018 INFO  workspace::logging] Completed refactor in 0.01s
+[2026-01-14 17:48:24.018 INFO  workspace::logging] Completed refactor in 0.01s
+[2026-01-14 17:48:24.018 INFO  ws] Workspace tool completed successfully
+[2026-01-14 17:48:32.469 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:32.469 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:32.469 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:32.469 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:32.469 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:32.469 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:32.469 INFO  ws] Starting workspace tool suite
+[2026-01-14 17:48:32.473 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:32.473 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:32.478 INFO  workspace::logging] Completed refactor in 0.01s
+[2026-01-14 17:48:32.478 INFO  workspace::logging] Completed refactor in 0.01s
+[2026-01-14 17:48:32.478 INFO  ws] Workspace tool completed successfully
+[2026-01-14 17:48:41.422 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:41.423 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-14 17:48:41.423 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:41.423 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-14 17:48:41.423 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:41.423 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-14 17:48:41.423 INFO  ws] Starting workspace tool suite
+[2026-01-14 17:48:41.426 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:41.426 INFO  workspace::logging] Starting refactor: root: "."
+[2026-01-14 17:48:41.431 INFO  workspace::logging] Completed refactor in 0.00s
+[2026-01-14 17:48:41.431 INFO  workspace::logging] Completed refactor in 0.00s
+[2026-01-14 17:48:41.431 INFO  ws] Workspace tool completed successfully

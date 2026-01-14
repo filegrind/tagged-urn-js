@@ -4,7 +4,7 @@
 const {
   TaggedUrn,
   TaggedUrnBuilder,
-  CapMatcher,
+  UrnMatcher,
   TaggedUrnError,
   ErrorCodes
 } = require('./capns.js');
@@ -258,8 +258,8 @@ function testConvenienceMethods() {
   console.log('  ✓ Convenience methods');
 }
 
-function testCapMatcher() {
-  console.log('Testing CapMatcher...');
+function testUrnMatcher() {
+  console.log('Testing UrnMatcher...');
 
   const caps = [
     TaggedUrn.fromString('cap:op=*'),
@@ -268,17 +268,17 @@ function testCapMatcher() {
   ];
 
   const request = TaggedUrn.fromString('cap:op=generate');
-  const best = CapMatcher.findBestMatch(caps, request);
+  const best = UrnMatcher.findBestMatch(caps, request);
 
   // Most specific cap that can handle the request (alphabetically sorted: ext < op)
   assertEqual(best.toString(), 'cap:ext=pdf;op=generate', 'Should find most specific match');
 
   // Test findAllMatches
-  const matches = CapMatcher.findAllMatches(caps, request);
+  const matches = UrnMatcher.findAllMatches(caps, request);
   assertEqual(matches.length, 3, 'Should find all matches');
   assertEqual(matches[0].toString(), 'cap:ext=pdf;op=generate', 'Should sort by specificity');
 
-  console.log('  ✓ CapMatcher');
+  console.log('  ✓ UrnMatcher');
 }
 
 function testJSONSerialization() {
@@ -523,7 +523,7 @@ function runTests() {
   testCompatibility();
   testBuilder();
   testConvenienceMethods();
-  testCapMatcher();
+  testUrnMatcher();
   testJSONSerialization();
   testEmptyTaggedUrn();
   testExtendedCharacterSupport();

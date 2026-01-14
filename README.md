@@ -21,7 +21,7 @@ npm install tagged-urn
 ## Quick Start
 
 ```javascript
-const { TaggedUrn, TaggedUrnBuilder, CapMatcher } = require('tagged-urn');
+const { TaggedUrn, TaggedUrnBuilder, UrnMatcher } = require('tagged-urn');
 
 // Create from string
 const urn = TaggedUrn.fromString('cap:op=generate;ext=pdf');
@@ -43,7 +43,7 @@ const urns = [
   TaggedUrn.fromString('cap:op=generate'),
   TaggedUrn.fromString('cap:op=generate;ext=pdf')
 ];
-const best = CapMatcher.findBestMatch(urns, request);
+const best = UrnMatcher.findBestMatch(urns, request);
 console.log(best.toString()); // "cap:ext=pdf;op=generate" (most specific)
 ```
 
@@ -79,13 +79,13 @@ const urn = new TaggedUrnBuilder()
   .build();
 ```
 
-### CapMatcher Class
+### UrnMatcher Class
 
 Utility for matching sets of Tagged URNs:
 
-- `CapMatcher.findBestMatch(urns, request)` - Find most specific match
-- `CapMatcher.findAllMatches(urns, request)` - Find all matches (sorted by specificity)
-- `CapMatcher.areCompatible(urns1, urns2)` - Check if URN sets are compatible
+- `UrnMatcher.findBestMatch(urns, request)` - Find most specific match
+- `UrnMatcher.findAllMatches(urns, request)` - Find all matches (sorted by specificity)
+- `UrnMatcher.areCompatible(urns1, urns2)` - Check if URN sets are compatible
 
 ### Error Handling
 

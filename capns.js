@@ -684,7 +684,7 @@ class TaggedUrnBuilder {
 /**
  * URN Matcher utility class
  */
-class CapMatcher {
+class UrnMatcher {
   /**
    * Find the most specific URN that can handle a request
    * All URNs must have the same prefix as the request
@@ -760,7 +760,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     TaggedUrn,
     TaggedUrnBuilder,
-    CapMatcher,
+    UrnMatcher,
     TaggedUrnError,
     ErrorCodes
   };
@@ -769,7 +769,7 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof window !== 'undefined') {
   window.TaggedUrn = TaggedUrn;
   window.TaggedUrnBuilder = TaggedUrnBuilder;
-  window.CapMatcher = CapMatcher;
+  window.UrnMatcher = UrnMatcher;
   window.TaggedUrnError = TaggedUrnError;
   window.TaggedUrnErrorCodes = ErrorCodes;
 }
