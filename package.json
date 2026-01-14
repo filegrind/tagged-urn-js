@@ -1,0 +1,32 @@
+{
+  "name": "tagged-urn",
+  "version": "1.0.0",
+  "description": "JavaScript implementation of Tagged URN with strict validation and matching",
+  "main": "capns.js",
+  "scripts": {
+    "test": "node capns.test.js"
+  },
+  "keywords": [
+    "tagged-urn",
+    "urn",
+    "namespace",
+    "validation",
+    "matching"
+  ],
+  "author": "FGND Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fgnd/tagged-urn.git",
+    "directory": "tagged-urn-js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "capns.js",
+    "capns.test.js",
+    "RULES.md",
+    "README.md"
+  ]
+}
