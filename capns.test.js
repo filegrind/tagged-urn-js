@@ -78,21 +78,28 @@ function testCaseInsensitive() {
   console.log('  ✓ Case insensitive behavior');
 }
 
-function testCapPrefixRequired() {
-  console.log('Testing cap: prefix requirement...');
+function testPrefixRequired() {
+  console.log('Testing prefix requirement...');
 
-  // Missing cap: prefix should fail
+  // Missing prefix should fail
   assertThrows(
     () => TaggedUrn.fromString('op=generate;ext=pdf'),
-    ErrorCodes.MISSING_CAP_PREFIX,
-    'Should require cap: prefix'
+    ErrorCodes.MISSING_PREFIX,
+    'Should require prefix'
   );
 
-  // Valid cap: prefix should work
-  const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assertEqual(cap.getTag('op'), 'generate', 'Should parse with valid cap: prefix');
+  // Empty prefix should fail
+  assertThrows(
+    () => TaggedUrn.fromString(':op=generate'),
+    ErrorCodes.EMPTY_PREFIX,
+    'Should reject empty prefix'
+  );
 
-  console.log('  ✓ Cap prefix requirement');
+  // Valid prefix should work
+  const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  assertEqual(cap.getTag('op'), 'generate', 'Should parse with valid prefix');
+
+  console.log('  ✓ Prefix requirement');
 }
 
 function testTrailingSemicolonEquivalence() {
@@ -205,7 +212,7 @@ function testCompatibility() {
 function testBuilder() {
   console.log('Testing builder...');
 
-  const cap = new TaggedUrnBuilder()
+  const cap = new TaggedUrnBuilder('cap')
     .tag('op', 'generate')
     .tag('target', 'thumbnail')
     .tag('ext', 'pdf')
@@ -377,7 +384,7 @@ function testOpTagRename() {
   assertEqual(cap.getTag('action'), undefined, 'Should not have action tag');
 
   // Builder should use op
-  const built = new TaggedUrnBuilder()
+  const built = new TaggedUrnBuilder('cap')
     .tag('op', 'transform')
     .tag('type', 'data')
     .build();
@@ -507,7 +514,7 @@ function runTests() {
   // Core URN tests
   testTaggedUrnCreation();
   testCaseInsensitive();
-  testCapPrefixRequired();
+  testPrefixRequired();
   testTrailingSemicolonEquivalence();
   testCanonicalStringFormat();
   testTagMatching();

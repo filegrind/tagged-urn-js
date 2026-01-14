@@ -18,11 +18,13 @@ const ErrorCodes = {
   EMPTY_TAG: 2,
   INVALID_CHARACTER: 3,
   INVALID_TAG_FORMAT: 4,
-  MISSING_CAP_PREFIX: 5,
+  MISSING_PREFIX: 5,
   DUPLICATE_KEY: 6,
   NUMERIC_KEY: 7,
   UNTERMINATED_QUOTE: 8,
-  INVALID_ESCAPE_SEQUENCE: 9
+  INVALID_ESCAPE_SEQUENCE: 9,
+  EMPTY_PREFIX: 10,
+  PREFIX_MISMATCH: 11
 };
 
 // Parser states for state machine
@@ -78,16 +80,17 @@ function quoteValue(value) {
 }
 
 /**
- * Tagged URN implementation with flat, ordered tags
+ * Tagged URN implementation with flat, ordered tags and configurable prefix
  */
 class TaggedUrn {
   /**
    * Create a new TaggedUrn
-   * Keys are normalized to lowercase; values are preserved as-is
+   * @param {string} prefix - The prefix for this URN
    * @param {Object} tags - Initial tags (will not be re-normalized in constructor)
    * @param {boolean} skipNormalization - If true, skip key normalization (internal use)
    */
-  constructor(tags = {}, skipNormalization = false) {
+  constructor(prefix, tags = {}, skipNormalization = false) {
+    this.prefix = prefix.toLowerCase();
     this.tags = {};
     if (skipNormalization) {
       this.tags = { ...tags };
@@ -100,9 +103,10 @@ class TaggedUrn {
 
   /**
    * Create a Tagged URN from string representation
-   * Format: cap:key1=value1;key2=value2;... or cap:key1="value with spaces";key2=simple
+   * Format: prefix:key1=value1;key2=value2;... or prefix:key1="value with spaces";key2=simple
    *
    * Case handling:
+   * - Prefix: Normalized to lowercase
    * - Keys: Always normalized to lowercase
    * - Unquoted values: Normalized to lowercase
    * - Quoted values: Case preserved exactly as specified
@@ -116,17 +120,23 @@ class TaggedUrn {
       throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'Tagged URN cannot be empty');
     }
 
-    // Check for "cap:" prefix (case-insensitive)
-    if (s.length < 4 || s.slice(0, 4).toLowerCase() !== 'cap:') {
-      throw new TaggedUrnError(ErrorCodes.MISSING_CAP_PREFIX, "Tagged URN must start with 'cap:'");
+    // Find the prefix (everything before the first colon)
+    const colonPos = s.indexOf(':');
+    if (colonPos === -1) {
+      throw new TaggedUrnError(ErrorCodes.MISSING_PREFIX, "Tagged URN must have a prefix followed by ':'");
     }
 
-    const tagsPart = s.slice(4);
+    if (colonPos === 0) {
+      throw new TaggedUrnError(ErrorCodes.EMPTY_PREFIX, 'Tagged URN prefix cannot be empty');
+    }
+
+    const prefix = s.slice(0, colonPos).toLowerCase();
+    const tagsPart = s.slice(colonPos + 1);
     const tags = {};
 
-    // Handle empty tagged URN (cap: with no tags or just semicolon)
+    // Handle empty tagged URN (prefix: with no tags or just semicolon)
     if (tagsPart === '' || tagsPart === ';') {
-      return new TaggedUrn(tags, true);
+      return new TaggedUrn(prefix, tags, true);
     }
 
     let state = ParseState.EXPECTING_KEY;
@@ -263,12 +273,29 @@ class TaggedUrn {
         throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, `empty value for key '${currentKey}'`);
     }
 
-    return new TaggedUrn(tags, true);
+    return new TaggedUrn(prefix, tags, true);
+  }
+
+  /**
+   * Create an empty Tagged URN with the specified prefix (required)
+   * @param {string} prefix - The prefix to use
+   * @returns {TaggedUrn} An empty TaggedUrn instance
+   */
+  static empty(prefix) {
+    return new TaggedUrn(prefix, {}, true);
+  }
+
+  /**
+   * Get the prefix of this tagged URN
+   * @returns {string} The prefix
+   */
+  getPrefix() {
+    return this.prefix;
   }
 
   /**
    * Get the canonical string representation of this tagged URN
-   * Always includes "cap:" prefix
+   * Uses the stored prefix
    * Tags are sorted alphabetically for consistent representation
    * No trailing semicolon in canonical form
    * Values are quoted only when necessary (smart quoting)
@@ -277,7 +304,7 @@ class TaggedUrn {
    */
   toString() {
     if (Object.keys(this.tags).length === 0) {
-      return 'cap:';
+      return `${this.prefix}:`;
     }
 
     // Sort keys for canonical representation
@@ -293,7 +320,7 @@ class TaggedUrn {
       }
     });
 
-    return `cap:${tagParts.join(';')}`;
+    return `${this.prefix}:${tagParts.join(';')}`;
   }
 
   /**
@@ -308,7 +335,7 @@ class TaggedUrn {
   }
 
   /**
-   * Check if this cap has a specific tag with a specific value
+   * Check if this URN has a specific tag with a specific value
    * Key is normalized to lowercase; value comparison is case-sensitive
    *
    * @param {string} key - The tag key
@@ -331,7 +358,7 @@ class TaggedUrn {
   withTag(key, value) {
     const newTags = { ...this.tags };
     newTags[key.toLowerCase()] = value;
-    return new TaggedUrn(newTags, true);
+    return new TaggedUrn(this.prefix, newTags, true);
   }
 
   /**
@@ -344,68 +371,82 @@ class TaggedUrn {
   withoutTag(key) {
     const newTags = { ...this.tags };
     delete newTags[key.toLowerCase()];
-    return new TaggedUrn(newTags, true);
+    return new TaggedUrn(this.prefix, newTags, true);
   }
 
   /**
-   * Check if this cap matches another based on tag compatibility
+   * Check if this URN matches another based on tag compatibility
    *
-   * A cap matches a request if:
-   * - For each tag in the request: cap has same value, wildcard (*), or missing tag
-   * - For each tag in the cap: if request is missing that tag, that's fine (cap is more specific)
+   * IMPORTANT: Both URNs must have the same prefix. Comparing URNs with
+   * different prefixes is a programming error and will throw an error.
+   *
+   * A URN matches a request if:
+   * - Both have the same prefix
+   * - For each tag in the request: URN has same value, wildcard (*), or missing tag
+   * - For each tag in the URN: if request is missing that tag, that's fine (URN is more specific)
    * Missing tags are treated as wildcards (less specific, can handle any value).
    *
-   * @param {TaggedUrn} request - The request cap to match against
-   * @returns {boolean} Whether this cap matches the request
+   * @param {TaggedUrn} request - The request URN to match against
+   * @returns {boolean} Whether this URN matches the request
+   * @throws {TaggedUrnError} If prefixes don't match
    */
   matches(request) {
     if (!request) {
-      return true;
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot match against null request');
+    }
+
+    // First check prefix - must match exactly
+    if (this.prefix !== request.prefix) {
+      throw new TaggedUrnError(
+        ErrorCodes.PREFIX_MISMATCH,
+        `Cannot compare URNs with different prefixes: '${this.prefix}' vs '${request.prefix}'`
+      );
     }
 
     // Check all tags that the request specifies
     for (const [requestKey, requestValue] of Object.entries(request.tags)) {
-      const capValue = this.tags[requestKey];
+      const urnValue = this.tags[requestKey];
 
-      if (capValue === undefined) {
-        // Missing tag in cap is treated as wildcard - can handle any value
+      if (urnValue === undefined) {
+        // Missing tag in URN is treated as wildcard - can handle any value
         continue;
       }
 
-      if (capValue === '*') {
-        // Cap has wildcard - can handle any value
+      if (urnValue === '*') {
+        // URN has wildcard - can handle any value
         continue;
       }
 
       if (requestValue === '*') {
-        // Request accepts any value - cap's specific value matches
+        // Request accepts any value - URN's specific value matches
         continue;
       }
 
-      if (capValue !== requestValue) {
-        // Cap has specific value that doesn't match request's specific value
+      if (urnValue !== requestValue) {
+        // URN has specific value that doesn't match request's specific value
         return false;
       }
     }
 
-    // If cap has additional specific tags that request doesn't specify, that's fine
-    // The cap is just more specific than needed
+    // If URN has additional specific tags that request doesn't specify, that's fine
+    // The URN is just more specific than needed
     return true;
   }
 
   /**
-   * Check if this cap can handle a request
+   * Check if this URN can handle a request
    *
-   * @param {TaggedUrn} request - The requested cap
-   * @returns {boolean} Whether this cap can handle the request
+   * @param {TaggedUrn} request - The requested URN
+   * @returns {boolean} Whether this URN can handle the request
+   * @throws {TaggedUrnError} If prefixes don't match
    */
   canHandle(request) {
     return this.matches(request);
   }
 
   /**
-   * Calculate specificity score for cap matching
-   * More specific caps have higher scores and are preferred
+   * Calculate specificity score for URN matching
+   * More specific URNs have higher scores and are preferred
    *
    * @returns {number} The number of non-wildcard tags
    */
@@ -414,17 +455,26 @@ class TaggedUrn {
   }
 
   /**
-   * Check if this cap is more specific than another
+   * Check if this URN is more specific than another
    *
-   * @param {TaggedUrn} other - The other cap to compare with
-   * @returns {boolean} Whether this cap is more specific
+   * @param {TaggedUrn} other - The other URN to compare with
+   * @returns {boolean} Whether this URN is more specific
+   * @throws {TaggedUrnError} If prefixes don't match
    */
   isMoreSpecificThan(other) {
     if (!other) {
-      return true;
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot compare against null URN');
     }
 
-    // First check if they're compatible
+    // First check prefix
+    if (this.prefix !== other.prefix) {
+      throw new TaggedUrnError(
+        ErrorCodes.PREFIX_MISMATCH,
+        `Cannot compare URNs with different prefixes: '${this.prefix}' vs '${other.prefix}'`
+      );
+    }
+
+    // Then check if they're compatible
     if (!this.isCompatibleWith(other)) {
       return false;
     }
@@ -433,20 +483,29 @@ class TaggedUrn {
   }
 
   /**
-   * Check if this cap is compatible with another
+   * Check if this URN is compatible with another
    *
-   * Two caps are compatible if they can potentially match
+   * Two URNs are compatible if they have the same prefix and can potentially match
    * the same types of requests (considering wildcards and missing tags as wildcards)
    *
-   * @param {TaggedUrn} other - The other cap to check compatibility with
-   * @returns {boolean} Whether the caps are compatible
+   * @param {TaggedUrn} other - The other URN to check compatibility with
+   * @returns {boolean} Whether the URNs are compatible
+   * @throws {TaggedUrnError} If prefixes don't match
    */
   isCompatibleWith(other) {
     if (!other) {
-      return true;
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot check compatibility with null URN');
     }
 
-    // Get all unique tag keys from both caps
+    // First check prefix
+    if (this.prefix !== other.prefix) {
+      throw new TaggedUrnError(
+        ErrorCodes.PREFIX_MISMATCH,
+        `Cannot compare URNs with different prefixes: '${this.prefix}' vs '${other.prefix}'`
+      );
+    }
+
+    // Get all unique tag keys from both URNs
     const allKeys = new Set([...Object.keys(this.tags), ...Object.keys(other.tags)]);
 
     for (const key of allKeys) {
@@ -466,7 +525,7 @@ class TaggedUrn {
   }
 
   /**
-   * Create a new cap with a specific tag set to wildcard
+   * Create a new URN with a specific tag set to wildcard
    *
    * @param {string} key - The tag key to set to wildcard
    * @returns {TaggedUrn} A new TaggedUrn instance with the tag set to wildcard
@@ -479,7 +538,7 @@ class TaggedUrn {
   }
 
   /**
-   * Create a new cap with only specified tags
+   * Create a new URN with only specified tags
    *
    * @param {string[]} keys - Array of tag keys to include
    * @returns {TaggedUrn} A new TaggedUrn instance with only the specified tags
@@ -492,21 +551,32 @@ class TaggedUrn {
         newTags[normalizedKey] = this.tags[normalizedKey];
       }
     }
-    return new TaggedUrn(newTags, true);
+    return new TaggedUrn(this.prefix, newTags, true);
   }
 
   /**
-   * Merge with another cap (other takes precedence for conflicts)
+   * Merge with another URN (other takes precedence for conflicts)
+   * Both must have the same prefix
    *
-   * @param {TaggedUrn} other - The cap to merge with
+   * @param {TaggedUrn} other - The URN to merge with
    * @returns {TaggedUrn} A new TaggedUrn instance with merged tags
+   * @throws {TaggedUrnError} If prefixes don't match
    */
   merge(other) {
-    const newTags = { ...this.tags };
-    if (other && other.tags) {
-      Object.assign(newTags, other.tags);
+    if (!other) {
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot merge with null URN');
     }
-    return new TaggedUrn(newTags, true);
+
+    if (this.prefix !== other.prefix) {
+      throw new TaggedUrnError(
+        ErrorCodes.PREFIX_MISMATCH,
+        `Cannot merge URNs with different prefixes: '${this.prefix}' vs '${other.prefix}'`
+      );
+    }
+
+    const newTags = { ...this.tags };
+    Object.assign(newTags, other.tags);
+    return new TaggedUrn(this.prefix, newTags, true);
   }
 
   /**
@@ -517,6 +587,10 @@ class TaggedUrn {
    */
   equals(other) {
     if (!other || !(other instanceof TaggedUrn)) {
+      return false;
+    }
+
+    if (this.prefix !== other.prefix) {
       return false;
     }
 
@@ -562,7 +636,12 @@ class TaggedUrn {
  * Tagged URN Builder for fluent construction
  */
 class TaggedUrnBuilder {
-  constructor() {
+  /**
+   * Create a new builder with a specified prefix (required)
+   * @param {string} prefix - The prefix to use
+   */
+  constructor(prefix) {
+    this._prefix = prefix.toLowerCase();
     this.tags = {};
   }
 
@@ -589,30 +668,41 @@ class TaggedUrnBuilder {
     if (Object.keys(this.tags).length === 0) {
       throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'Tagged URN cannot be empty');
     }
-    return new TaggedUrn(this.tags, true);
+    return new TaggedUrn(this._prefix, this.tags, true);
+  }
+
+  /**
+   * Build the final TaggedUrn, allowing empty tags
+   *
+   * @returns {TaggedUrn} A new TaggedUrn instance
+   */
+  buildAllowEmpty() {
+    return new TaggedUrn(this._prefix, this.tags, true);
   }
 }
 
 /**
- * Cap Matcher utility class
+ * URN Matcher utility class
  */
 class CapMatcher {
   /**
-   * Find the most specific cap that can handle a request
+   * Find the most specific URN that can handle a request
+   * All URNs must have the same prefix as the request
    *
-   * @param {TaggedUrn[]} caps - Array of available caps
+   * @param {TaggedUrn[]} urns - Array of available URNs
    * @param {TaggedUrn} request - The request to match
-   * @returns {TaggedUrn|null} The best matching cap or null if no match
+   * @returns {TaggedUrn|null} The best matching URN or null if no match
+   * @throws {TaggedUrnError} If prefixes don't match
    */
-  static findBestMatch(caps, request) {
+  static findBestMatch(urns, request) {
     let best = null;
     let bestSpecificity = -1;
 
-    for (const cap of caps) {
-      if (cap.canHandle(request)) {
-        const specificity = cap.specificity();
+    for (const urn of urns) {
+      if (urn.canHandle(request)) {
+        const specificity = urn.specificity();
         if (specificity > bestSpecificity) {
-          best = cap;
+          best = urn;
           bestSpecificity = specificity;
         }
       }
@@ -622,14 +712,21 @@ class CapMatcher {
   }
 
   /**
-   * Find all caps that can handle a request, sorted by specificity
+   * Find all URNs that can handle a request, sorted by specificity
+   * All URNs must have the same prefix as the request
    *
-   * @param {TaggedUrn[]} caps - Array of available caps
+   * @param {TaggedUrn[]} urns - Array of available URNs
    * @param {TaggedUrn} request - The request to match
-   * @returns {TaggedUrn[]} Array of matching caps sorted by specificity (most specific first)
+   * @returns {TaggedUrn[]} Array of matching URNs sorted by specificity (most specific first)
+   * @throws {TaggedUrnError} If prefixes don't match
    */
-  static findAllMatches(caps, request) {
-    const matches = caps.filter(cap => cap.canHandle(request));
+  static findAllMatches(urns, request) {
+    const matches = [];
+    for (const urn of urns) {
+      if (urn.canHandle(request)) {
+        matches.push(urn);
+      }
+    }
 
     // Sort by specificity (most specific first)
     matches.sort((a, b) => b.specificity() - a.specificity());
@@ -638,16 +735,18 @@ class CapMatcher {
   }
 
   /**
-   * Check if two cap sets are compatible
+   * Check if two URN sets are compatible
+   * All URNs in both sets must have the same prefix
    *
-   * @param {TaggedUrn[]} caps1 - First set of caps
-   * @param {TaggedUrn[]} caps2 - Second set of caps
-   * @returns {boolean} Whether any caps from the two sets are compatible
+   * @param {TaggedUrn[]} urns1 - First set of URNs
+   * @param {TaggedUrn[]} urns2 - Second set of URNs
+   * @returns {boolean} Whether any URNs from the two sets are compatible
+   * @throws {TaggedUrnError} If prefixes don't match
    */
-  static areCompatible(caps1, caps2) {
-    for (const c1 of caps1) {
-      for (const c2 of caps2) {
-        if (c1.isCompatibleWith(c2)) {
+  static areCompatible(urns1, urns2) {
+    for (const u1 of urns1) {
+      for (const u2 of urns2) {
+        if (u1.isCompatibleWith(u2)) {
           return true;
         }
       }
