@@ -474,11 +474,11 @@ function testMatchingSemantics_Test6_ValueMismatch() {
 function testMatchingSemantics_Test7_FallbackPattern() {
   console.log('Testing Matching Semantics Test 7: Fallback pattern...');
   // Test 7: Fallback pattern
-  // Cap:     cap:op=generate_thumbnail;out=std:binary.v1
-  // Request: cap:op=generate_thumbnail;out=std:binary.v1;ext=wav
+  // Cap:     cap:op=generate_thumbnail;out=media:type=binary;v=1
+  // Request: cap:op=generate_thumbnail;out=media:type=binary;v=1;ext=wav
   // Result:  MATCH (cap has implicit ext=*)
-  const cap = TaggedUrn.fromString('cap:op=generate_thumbnail;out=std:binary.v1');
-  const request = TaggedUrn.fromString('cap:op=generate_thumbnail;out=std:binary.v1;ext=wav');
+  const cap = TaggedUrn.fromString('cap:op=generate_thumbnail;out=media:type=binary;v=1');
+  const request = TaggedUrn.fromString('cap:op=generate_thumbnail;out=media:type=binary;v=1;ext=wav');
   assert(cap.matches(request), 'Test 7: Fallback pattern should match (cap missing ext = implicit wildcard)');
   console.log('  ✓ Test 7: Fallback pattern');
 }
