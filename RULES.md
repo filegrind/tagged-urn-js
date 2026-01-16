@@ -37,8 +37,14 @@ The canonical form of Tagged URNs is all lowercase, with tags sorted by keys alp
 - Wildcard `*` is accepted only as tag value, not as tag key
 - When used as a tag value, `*` matches any value for that tag key
 
-### 11. No Empty Components
-Tags with no values are not accepted. Both key and value must be non-empty after trimming whitespace.
+### 11. Value-less Tags (Existence Assertion)
+- Tags may be specified without a value: `cap:key1=value1;optimize;key2=value2`
+- A value-less tag like `optimize` is equivalent to `optimize=*` (wildcard)
+- This asserts that the tag exists but matches any value
+- Value-less tags are useful as flags or for checking tag existence
+- **Parsing:** `tag` (no `=`) is parsed as `tag=*`
+- **Serialization:** `tag=*` is serialized as just `tag` (no `=*`)
+- **Note:** `tag=` (explicit `=` with no value) is still an error - this is different from a value-less tag
 
 ### 12. Matching Specificity
 As more tags are specified, URNs become more specific:
@@ -82,3 +88,5 @@ Forward slashes (`/`) and colons (`:`) are valid anywhere in tag components and 
 - All implementations must validate character restrictions identically
 - All implementations must implement matching logic identically
 - All implementations must reject duplicate keys with appropriate error messages
+- All implementations must parse value-less tags as wildcard (`tag` → `tag=*`)
+- All implementations must serialize wildcard tags as value-less (`tag=*` → `tag`)

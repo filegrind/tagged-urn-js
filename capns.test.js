@@ -253,7 +253,8 @@ function testConvenienceMethods() {
   // Test wildcardTag
   const cap = TaggedUrn.fromString('cap:ext=pdf');
   const wildcarded = cap.withWildcardTag('ext');
-  assertEqual(wildcarded.toString(), 'cap:ext=*', 'Should set wildcard');
+  // Wildcard serializes as value-less tag
+  assertEqual(wildcarded.toString(), 'cap:ext', 'Should set wildcard (serializes as value-less)');
 
   console.log('  ✓ Convenience methods');
 }
@@ -507,6 +508,178 @@ function testMatchingSemantics_Test9_CrossDimensionIndependence() {
   console.log('  ✓ Test 9: Cross-dimension independence');
 }
 
+// ============================================================================
+// VALUE-LESS TAG TESTS
+// Value-less tags are equivalent to wildcard tags (key=*)
+// ============================================================================
+
+function testValuelessTagParsingSingle() {
+  console.log('Testing value-less tag parsing (single)...');
+  // Single value-less tag
+  const urn = TaggedUrn.fromString('cap:optimize');
+  assertEqual(urn.getTag('optimize'), '*', 'Should parse value-less tag as wildcard');
+  // Serializes as value-less (no =*)
+  assertEqual(urn.toString(), 'cap:optimize', 'Should serialize without =*');
+  console.log('  ✓ Value-less tag parsing (single)');
+}
+
+function testValuelessTagParsingMultiple() {
+  console.log('Testing value-less tag parsing (multiple)...');
+  // Multiple value-less tags
+  const urn = TaggedUrn.fromString('cap:fast;optimize;secure');
+  assertEqual(urn.getTag('fast'), '*', 'Should parse first value-less tag');
+  assertEqual(urn.getTag('optimize'), '*', 'Should parse second value-less tag');
+  assertEqual(urn.getTag('secure'), '*', 'Should parse third value-less tag');
+  // Serializes alphabetically as value-less
+  assertEqual(urn.toString(), 'cap:fast;optimize;secure', 'Should serialize alphabetically');
+  console.log('  ✓ Value-less tag parsing (multiple)');
+}
+
+function testValuelessTagMixedWithValued() {
+  console.log('Testing value-less tag mixed with valued...');
+  // Mix of value-less and valued tags
+  const urn = TaggedUrn.fromString('cap:op=generate;optimize;ext=pdf;secure');
+  assertEqual(urn.getTag('op'), 'generate', 'Should parse valued tag');
+  assertEqual(urn.getTag('optimize'), '*', 'Should parse value-less tag');
+  assertEqual(urn.getTag('ext'), 'pdf', 'Should parse valued tag');
+  assertEqual(urn.getTag('secure'), '*', 'Should parse value-less tag');
+  // Serializes alphabetically
+  assertEqual(urn.toString(), 'cap:ext=pdf;op=generate;optimize;secure', 'Should serialize alphabetically');
+  console.log('  ✓ Value-less tag mixed with valued');
+}
+
+function testValuelessTagAtEnd() {
+  console.log('Testing value-less tag at end...');
+  // Value-less tag at the end (no trailing semicolon)
+  const urn = TaggedUrn.fromString('cap:op=generate;optimize');
+  assertEqual(urn.getTag('op'), 'generate', 'Should parse valued tag');
+  assertEqual(urn.getTag('optimize'), '*', 'Should parse value-less tag');
+  assertEqual(urn.toString(), 'cap:op=generate;optimize', 'Should serialize correctly');
+  console.log('  ✓ Value-less tag at end');
+}
+
+function testValuelessTagEquivalenceToWildcard() {
+  console.log('Testing value-less tag equivalence to wildcard...');
+  // Value-less tag is equivalent to explicit wildcard
+  const valueless = TaggedUrn.fromString('cap:ext');
+  const wildcard = TaggedUrn.fromString('cap:ext=*');
+  assert(valueless.equals(wildcard), 'Value-less should equal explicit wildcard');
+  // Both serialize to value-less form
+  assertEqual(valueless.toString(), 'cap:ext', 'Value-less should serialize as value-less');
+  assertEqual(wildcard.toString(), 'cap:ext', 'Wildcard should serialize as value-less');
+  console.log('  ✓ Value-less tag equivalence to wildcard');
+}
+
+function testValuelessTagMatching() {
+  console.log('Testing value-less tag matching...');
+  // Value-less tag (wildcard) matches any value
+  const urn = TaggedUrn.fromString('cap:op=generate;ext');
+  const requestPdf = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  const requestDocx = TaggedUrn.fromString('cap:op=generate;ext=docx');
+  const requestAny = TaggedUrn.fromString('cap:op=generate;ext=anything');
+
+  assert(urn.matches(requestPdf), 'Should match pdf');
+  assert(urn.matches(requestDocx), 'Should match docx');
+  assert(urn.matches(requestAny), 'Should match anything');
+  console.log('  ✓ Value-less tag matching');
+}
+
+function testValuelessTagInRequest() {
+  console.log('Testing value-less tag in request...');
+  // Request with value-less tag matches any URN value
+  const request = TaggedUrn.fromString('cap:op=generate;ext');
+  const urnPdf = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  const urnDocx = TaggedUrn.fromString('cap:op=generate;ext=docx');
+  const urnMissing = TaggedUrn.fromString('cap:op=generate');
+
+  assert(urnPdf.matches(request), 'Should match pdf URN');
+  assert(urnDocx.matches(request), 'Should match docx URN');
+  assert(urnMissing.matches(request), 'Should match URN with missing tag (implicit wildcard)');
+  console.log('  ✓ Value-less tag in request');
+}
+
+function testValuelessTagSpecificity() {
+  console.log('Testing value-less tag specificity...');
+  // Value-less tags (wildcards) don't count towards specificity
+  const urn1 = TaggedUrn.fromString('cap:op=generate');
+  const urn2 = TaggedUrn.fromString('cap:op=generate;optimize');
+  const urn3 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+
+  assertEqual(urn1.specificity(), 1, 'Should have specificity 1');
+  assertEqual(urn2.specificity(), 1, 'Value-less tag should not count');
+  assertEqual(urn3.specificity(), 2, 'Should have specificity 2');
+  console.log('  ✓ Value-less tag specificity');
+}
+
+function testValuelessTagRoundtrip() {
+  console.log('Testing value-less tag roundtrip...');
+  // Round-trip parsing and serialization
+  const original = 'cap:ext=pdf;op=generate;optimize;secure';
+  const urn = TaggedUrn.fromString(original);
+  const serialized = urn.toString();
+  const reparsed = TaggedUrn.fromString(serialized);
+  assert(urn.equals(reparsed), 'Should roundtrip correctly');
+  assertEqual(serialized, original, 'Serialized should match original');
+  console.log('  ✓ Value-less tag roundtrip');
+}
+
+function testValuelessTagCaseNormalization() {
+  console.log('Testing value-less tag case normalization...');
+  // Value-less tags are normalized to lowercase like other keys
+  const urn = TaggedUrn.fromString('cap:OPTIMIZE;Fast;SECURE');
+  assertEqual(urn.getTag('optimize'), '*', 'Should normalize to lowercase');
+  assertEqual(urn.getTag('fast'), '*', 'Should normalize to lowercase');
+  assertEqual(urn.getTag('secure'), '*', 'Should normalize to lowercase');
+  assertEqual(urn.toString(), 'cap:fast;optimize;secure', 'Should serialize as lowercase');
+  console.log('  ✓ Value-less tag case normalization');
+}
+
+function testEmptyValueStillError() {
+  console.log('Testing empty value still error...');
+  // Empty value with = is still an error (different from value-less)
+  assertThrows(
+    () => TaggedUrn.fromString('cap:key='),
+    ErrorCodes.EMPTY_TAG,
+    'Should reject empty value with ='
+  );
+  assertThrows(
+    () => TaggedUrn.fromString('cap:key=;other=value'),
+    ErrorCodes.EMPTY_TAG,
+    'Should reject empty value with ='
+  );
+  console.log('  ✓ Empty value still error');
+}
+
+function testValuelessTagCompatibility() {
+  console.log('Testing value-less tag compatibility...');
+  // Value-less tags are compatible with any value
+  const urn1 = TaggedUrn.fromString('cap:op=generate;ext');
+  const urn2 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  const urn3 = TaggedUrn.fromString('cap:op=generate;ext=docx');
+
+  assert(urn1.isCompatibleWith(urn2), 'Should be compatible with pdf');
+  assert(urn1.isCompatibleWith(urn3), 'Should be compatible with docx');
+  // But urn2 and urn3 are not compatible (different specific values)
+  assert(!urn2.isCompatibleWith(urn3), 'Specific values should not be compatible');
+  console.log('  ✓ Value-less tag compatibility');
+}
+
+function testValuelessNumericKeyStillRejected() {
+  console.log('Testing value-less numeric key still rejected...');
+  // Purely numeric keys are still rejected for value-less tags
+  assertThrows(
+    () => TaggedUrn.fromString('cap:123'),
+    ErrorCodes.NUMERIC_KEY,
+    'Should reject numeric key'
+  );
+  assertThrows(
+    () => TaggedUrn.fromString('cap:op=generate;456'),
+    ErrorCodes.NUMERIC_KEY,
+    'Should reject numeric key'
+  );
+  console.log('  ✓ Value-less numeric key still rejected');
+}
+
 // Run tests
 function runTests() {
   console.log('Running Tagged URN JavaScript tests...\n');
@@ -542,6 +715,21 @@ function runTests() {
   testMatchingSemantics_Test7_FallbackPattern();
   testMatchingSemantics_Test8_EmptyCapMatchesAnything();
   testMatchingSemantics_Test9_CrossDimensionIndependence();
+
+  // Value-less tag tests
+  testValuelessTagParsingSingle();
+  testValuelessTagParsingMultiple();
+  testValuelessTagMixedWithValued();
+  testValuelessTagAtEnd();
+  testValuelessTagEquivalenceToWildcard();
+  testValuelessTagMatching();
+  testValuelessTagInRequest();
+  testValuelessTagSpecificity();
+  testValuelessTagRoundtrip();
+  testValuelessTagCaseNormalization();
+  testEmptyValueStillError();
+  testValuelessTagCompatibility();
+  testValuelessNumericKeyStillRejected();
 
   console.log('\nOK All tests passed!');
 }

@@ -8,9 +8,10 @@ Production-ready JavaScript implementation of Tagged URN with strict validation 
 - **Case Insensitive** - All input normalized to lowercase
 - **Tag Order Independent** - Canonical alphabetical sorting
 - **Wildcard Support** - `*` matching in values only
+- **Value-less Tags** - Tags without values (`tag`) are wildcards (`tag=*`)
 - **Extended Characters** - Support for `/` and `:` in tag components
 - **Production Ready** - No fallbacks, fails hard on invalid input
-- **Comprehensive Tests** - Full test suite verifying all 21 rules
+- **Comprehensive Tests** - Full test suite verifying all rules
 
 ## Installation
 
