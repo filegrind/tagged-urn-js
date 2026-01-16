@@ -191,6 +191,14 @@ class TaggedUrn {
               throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, 'empty key');
             }
             state = ParseState.EXPECTING_VALUE;
+          } else if (c === ';') {
+            // Value-less tag: treat as wildcard
+            if (currentKey === '') {
+              throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, 'empty key');
+            }
+            currentValue = '*';
+            finishTag();
+            state = ParseState.EXPECTING_KEY;
           } else if (isValidKeyChar(c)) {
             currentKey += c.toLowerCase();
           } else {
@@ -268,7 +276,13 @@ class TaggedUrn {
       case ParseState.IN_QUOTED_VALUE_ESCAPE:
         throw new TaggedUrnError(ErrorCodes.UNTERMINATED_QUOTE, `unterminated quote at position ${pos}`);
       case ParseState.IN_KEY:
-        throw new TaggedUrnError(ErrorCodes.INVALID_TAG_FORMAT, `incomplete tag '${currentKey}'`);
+        // Value-less tag at end: treat as wildcard
+        if (currentKey === '') {
+          throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, 'empty key');
+        }
+        currentValue = '*';
+        finishTag();
+        break;
       case ParseState.EXPECTING_VALUE:
         throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, `empty value for key '${currentKey}'`);
     }
@@ -299,6 +313,7 @@ class TaggedUrn {
    * Tags are sorted alphabetically for consistent representation
    * No trailing semicolon in canonical form
    * Values are quoted only when necessary (smart quoting)
+   * Wildcard values (*) are serialized as value-less tags (just the key)
    *
    * @returns {string} The canonical string representation
    */
@@ -313,7 +328,10 @@ class TaggedUrn {
     // Build tag string with smart quoting
     const tagParts = sortedKeys.map(key => {
       const value = this.tags[key];
-      if (needsQuoting(value)) {
+      if (value === '*') {
+        // Value-less tag: output just the key
+        return key;
+      } else if (needsQuoting(value)) {
         return `${key}=${quoteValue(value)}`;
       } else {
         return `${key}=${value}`;
