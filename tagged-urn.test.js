@@ -7,7 +7,7 @@ const {
   UrnMatcher,
   TaggedUrnError,
   ErrorCodes
-} = require('./capns.js');
+} = require('./tagged-urn.js');
 
 // Test assertion utility
 function assert(condition, message) {
