@@ -773,21 +773,11 @@ class UrnMatcher {
   }
 }
 
-// Export for both CommonJS and ES modules
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    TaggedUrn,
-    TaggedUrnBuilder,
-    UrnMatcher,
-    TaggedUrnError,
-    ErrorCodes
-  };
-}
-
-if (typeof window !== 'undefined') {
-  window.TaggedUrn = TaggedUrn;
-  window.TaggedUrnBuilder = TaggedUrnBuilder;
-  window.UrnMatcher = UrnMatcher;
-  window.TaggedUrnError = TaggedUrnError;
-  window.TaggedUrnErrorCodes = ErrorCodes;
-}
+// Export for CommonJS
+module.exports = {
+  TaggedUrn,
+  TaggedUrnBuilder,
+  UrnMatcher,
+  TaggedUrnError,
+  ErrorCodes
+};
