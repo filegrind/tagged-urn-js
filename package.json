@@ -1,25 +1,6 @@
 {
-  "name": "tagged-urn",
-  "version": "1.0.0",
-  "description": "JavaScript implementation of Tagged URN with strict validation and matching",
-  "main": "tagged-urn.js",
-  "scripts": {
-    "test": "node tagged-urn.test.js"
-  },
-  "keywords": [
-    "tagged-urn",
-    "urn",
-    "namespace",
-    "validation",
-    "matching"
-  ],
   "author": "Bahram Joharshamshiri",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jowharshamshiri/tagged-urn.git",
-    "directory": "tagged-urn-js"
-  },
+  "description": "JavaScript implementation of Tagged URN with strict validation and matching",
   "engines": {
     "node": ">=14.0.0"
   },
@@ -28,5 +9,24 @@
     "tagged-urn.test.js",
     "RULES.md",
     "README.md"
-  ]
+  ],
+  "keywords": [
+    "tagged-urn",
+    "urn",
+    "namespace",
+    "validation",
+    "matching"
+  ],
+  "license": "MIT",
+  "main": "tagged-urn.js",
+  "name": "tagged-urn",
+  "repository": {
+    "directory": "tagged-urn-js",
+    "type": "git",
+    "url": "https://github.com/jowharshamshiri/tagged-urn.git"
+  },
+  "scripts": {
+    "test": "node tagged-urn.test.js"
+  },
+  "version": "0.7.2179"
 }
