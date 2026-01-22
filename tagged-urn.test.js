@@ -177,7 +177,7 @@ function testMissingTagHandling() {
 function testSpecificity() {
   console.log('Testing specificity...');
 
-  const cap1 = TaggedUrn.fromString('cap:type=general');
+  const cap1 = TaggedUrn.fromString('cap:general');
   const cap2 = TaggedUrn.fromString('cap:op=generate');
   const cap3 = TaggedUrn.fromString('cap:op=*;ext=pdf');
 
@@ -195,7 +195,7 @@ function testCompatibility() {
 
   const cap1 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const cap2 = TaggedUrn.fromString('cap:op=generate;format=*');
-  const cap3 = TaggedUrn.fromString('cap:type=image;op=extract');
+  const cap3 = TaggedUrn.fromString('cap:image;op=extract');
 
   assert(cap1.isCompatibleWith(cap2), 'Should be compatible');
   assert(cap2.isCompatibleWith(cap1), 'Should be compatible');
@@ -475,11 +475,11 @@ function testMatchingSemantics_Test6_ValueMismatch() {
 function testMatchingSemantics_Test7_FallbackPattern() {
   console.log('Testing Matching Semantics Test 7: Fallback pattern...');
   // Test 7: Fallback pattern
-  // Cap:     cap:op=generate_thumbnail;out="media:type=binary;v=1"
-  // Request: cap:op=generate_thumbnail;out="media:type=binary;v=1";ext=wav
+  // Cap:     cap:op=generate_thumbnail;out="media:binary"
+  // Request: cap:op=generate_thumbnail;out="media:binary";ext=wav
   // Result:  MATCH (cap has implicit ext=*)
-  const cap = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:type=binary;v=1"');
-  const request = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:type=binary;v=1";ext=wav');
+  const cap = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:binary"');
+  const request = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:binary";ext=wav');
   assert(cap.matches(request), 'Test 7: Fallback pattern should match (cap missing ext = implicit wildcard)');
   console.log('  ✓ Test 7: Fallback pattern');
 }
