@@ -80,3 +80,63 @@
 [2026-01-19 10:27:57.920 INFO  workspace::logging] Completed update in 0.19s
 [2026-01-19 10:27:57.920 INFO  workspace::logging] Completed update in 0.19s
 [2026-01-19 10:27:57.920 INFO  ws] Workspace tool completed successfully
+[2026-01-25 01:14:42.467 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-25 01:14:42.468 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-25 01:14:42.469 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-25 01:14:42.469 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-25 01:14:42.469 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-25 01:14:42.469 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-25 01:14:42.469 INFO  ws] Starting workspace tool suite
+[2026-01-25 01:14:42.478 INFO  workspace::logging] Starting update: no_git: false, git_add: false
+[2026-01-25 01:14:42.478 INFO  workspace::logging] Starting update: no_git: false, git_add: false
+[2026-01-25 01:14:42.514 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.514 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.514 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.514 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.566 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.566 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.566 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.566 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.648 INFO  ws] Version updated to: 0.10.2767
+[2026-01-25 01:14:42.749 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.749 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:14:42.749 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.749 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:14:42.864 INFO  workspace::st8::st8_common] Staged version file: version.txt
+[2026-01-25 01:14:42.864 INFO  workspace::st8::st8_common] Staged version file: version.txt
+[2026-01-25 01:14:42.931 INFO  workspace::st8::st8_common] Staged project file: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/package.json
+[2026-01-25 01:14:42.931 INFO  workspace::st8::st8_common] Staged project file: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/package.json
+[2026-01-25 01:14:42.931 INFO  workspace::st8::st8_common] Updated project files: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/package.json
+[2026-01-25 01:14:42.931 INFO  workspace::st8::st8_common] Updated project files: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/package.json
+[2026-01-25 01:14:42.931 INFO  ws] Updated version file: version.txt
+[2026-01-25 01:14:42.934 INFO  workspace::logging] Completed update in 0.46s
+[2026-01-25 01:14:42.934 INFO  workspace::logging] Completed update in 0.46s
+[2026-01-25 01:14:42.934 INFO  ws] Workspace tool completed successfully
+[2026-01-25 01:23:54.881 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-25 01:23:54.883 INFO  workspace::logging] Logging initialized: /Users/bahram/ws/prj/fgnd-ws/tagged-urn-js/.ws/logs/ws.log
+[2026-01-25 01:23:54.883 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-25 01:23:54.883 DEBUG workspace::logging] Debug logging enabled, console level: Warn
+[2026-01-25 01:23:54.883 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-25 01:23:54.883 INFO  workspace::logging] Workspace v0.62.182680
+[2026-01-25 01:23:54.883 INFO  ws] Starting workspace tool suite
+[2026-01-25 01:23:54.892 INFO  workspace::logging] Starting update: no_git: false, git_add: false
+[2026-01-25 01:23:54.892 INFO  workspace::logging] Starting update: no_git: false, git_add: false
+[2026-01-25 01:23:54.913 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:54.913 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:54.913 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:54.913 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:54.935 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:54.935 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:54.935 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:54.935 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:54.993 INFO  ws] Version updated to: 0.10.2767
+[2026-01-25 01:23:55.049 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:55.049 INFO  workspace::entities::database] Database indexes created successfully
+[2026-01-25 01:23:55.049 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:55.049 INFO  workspace::entities::database] Database tables initialized successfully
+[2026-01-25 01:23:55.101 INFO  workspace::st8::st8_common] Version 0.10.2767 is already up to date
+[2026-01-25 01:23:55.101 INFO  workspace::st8::st8_common] Version 0.10.2767 is already up to date
+[2026-01-25 01:23:55.101 INFO  ws] Updated version file: version.txt
+[2026-01-25 01:23:55.101 INFO  workspace::logging] Completed update in 0.21s
+[2026-01-25 01:23:55.101 INFO  workspace::logging] Completed update in 0.21s
+[2026-01-25 01:23:55.101 INFO  ws] Workspace tool completed successfully
