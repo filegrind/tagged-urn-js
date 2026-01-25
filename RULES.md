@@ -2,7 +2,7 @@
 
 ## Definitive specification for Tagged URN format and behavior
 
-This JavaScript implementation follows the exact same rules as the reference Rust implementation. See [tagged-urn-rs/docs/RULES.md](../tagged-urn-rs/docs/RULES.md) for the complete specification.
+This JavaScript implementation follows the exact same rules as the reference Rust implementation. See [tagged-urn-rs/docs/RULES.md](https://github.com/filegrind/tagged-urn-rs/blob/main/docs/RULES.md) for the complete specification.
 
 ### 1. Case Handling
 - **Tag keys:** Always normalized to lowercase

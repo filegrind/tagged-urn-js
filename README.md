@@ -161,8 +161,8 @@ console.log(urn.toString());
 ## Cross-Language Compatibility
 
 This JavaScript implementation produces identical results to:
-- [Rust implementation](../tagged-urn-rs/)
-- [Go implementation](../tagged-urn-go/)
-- [Objective-C implementation](../tagged-urn-objc/)
+- [Rust implementation](https://github.com/filegrind/tagged-urn-rs)
+- [Go implementation](https://github.com/filegrind/tagged-urn-go)
+- [Objective-C implementation](https://github.com/filegrind/tagged-urn-objc)
 
 All implementations pass the same test cases and follow identical rules.
