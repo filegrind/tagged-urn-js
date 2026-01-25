@@ -1,15 +1,16 @@
 # Tagged URN - JavaScript Implementation
 
-Production-ready JavaScript implementation of Tagged URN with strict validation and matching rules.
+Production-ready JavaScript implementation of Tagged URN with strict validation and pattern matching.
 
 ## Features
 
 - **Strict Rule Enforcement** - Follows exact same rules as Rust, Go, and Objective-C implementations
-- **Case Insensitive** - All input normalized to lowercase
+- **Case Insensitive** - All input normalized to lowercase (except quoted values)
 - **Tag Order Independent** - Canonical alphabetical sorting
-- **Wildcard Support** - `*` matching in values only
-- **Value-less Tags** - Tags without values (`tag`) are wildcards (`tag=*`)
+- **Special Pattern Values** - `*` (must-have-any), `?` (unspecified), `!` (must-not-have)
+- **Value-less Tags** - Tags without values (`tag`) mean must-have-any (`tag=*`)
 - **Extended Characters** - Support for `/` and `:` in tag components
+- **Graded Specificity** - Exact values score higher than wildcards
 - **Production Ready** - No fallbacks, fails hard on invalid input
 - **Comprehensive Tests** - Full test suite verifying all rules
 
@@ -113,7 +114,7 @@ Error codes:
 
 ## Rules
 
-This implementation strictly follows the 21 Tagged URN rules. See `RULES.md` for complete specification.
+This implementation strictly follows the Tagged URN rules. See `RULES.md` for complete specification.
 
 ### Key Rules Summary:
 
@@ -123,10 +124,19 @@ This implementation strictly follows the 21 Tagged URN rules. See `RULES.md` for
 4. **Semicolon Separated** - Tags separated by `;`
 5. **Optional Trailing `;`** - `cap:a=1;` == `cap:a=1`
 6. **Canonical Form** - Lowercase, alphabetically sorted, no trailing `;`
-7. **Wildcard Values** - `*` allowed in values only, not keys
+7. **Special Values** - `*` (must-have-any), `?` (unspecified), `!` (must-not-have)
 8. **Extended Characters** - `/` and `:` allowed in tag components
 9. **No Duplicate Keys** - Fails hard on duplicates
 10. **No Numeric Keys** - Pure numeric keys forbidden
+
+### Matching Semantics:
+
+| Pattern | Instance Missing | Instance=v | Instance=x≠v |
+|---------|------------------|------------|--------------|
+| (missing) or `?` | OK | OK | OK |
+| `K=!` | OK | NO | NO |
+| `K=*` | NO | OK | OK |
+| `K=v` | NO | OK | NO |
 
 ## Testing
 

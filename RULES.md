@@ -2,91 +2,109 @@
 
 ## Definitive specification for Tagged URN format and behavior
 
-### 1. Case Insensitivity
-Tagged URNs are case insensitive. All input is normalized to lowercase for storage and comparison.
+This JavaScript implementation follows the exact same rules as the reference Rust implementation. See [tagged-urn-rs/docs/RULES.md](../tagged-urn-rs/docs/RULES.md) for the complete specification.
+
+### 1. Case Handling
+- **Tag keys:** Always normalized to lowercase
+- **Unquoted values:** Normalized to lowercase
+- **Quoted values:** Case is preserved exactly as specified
 
 ### 2. Tag Order Independence
-The order of tags in the URN string does not matter. Tags are always sorted alphabetically by key in canonical form.
+Tags are always sorted alphabetically by key in canonical form.
 
 ### 3. Mandatory Prefix
-Tagged URNs must always be preceded by `cap:` which is the signifier of a tagged URN.
+Tagged URNs must start with `cap:` (case-insensitive for parsing).
 
 ### 4. Tag Separator
 Tags are separated by semicolons (`;`).
 
 ### 5. Trailing Semicolon Optional
-Presence or absence of the final trailing semicolon does not matter. Both `cap:key=value` and `cap:key=value;` are equivalent.
+Both `cap:key=value` and `cap:key=value;` are equivalent.
 
 ### 6. Character Restrictions
-- No spaces in tagged URNs
-- Allowed characters in tag keys and values: alphanumeric, dashes (`-`), underscores (`_`), slashes (`/`), colons (`:`), dots (`.`), and asterisk (`*` in values only)
-- Quote marks (`"`, `'`), hash (`#`), and other special characters are not accepted
+- **Keys:** Alphanumeric, dashes (`-`), underscores (`_`), slashes (`/`), colons (`:`), dots (`.`)
+- **Unquoted values:** Same as keys plus special pattern characters (`*`, `?`, `!`)
+- **Quoted values:** Any character allowed with `\"` and `\\` escapes
 
-### 7. Tag Structure
-- Tag separator within a tag: `=` separates tag key from tag value
-- Tag separator between tags: `;` separates key-value pairs
-- After the initial `cap:` prefix, colons (`:`) are treated as normal characters, not separators
+### 7. Special Pattern Values
 
-### 8. No Special Tags
-No reserved tag names - anything goes for tag keys.
+| Value | Name | Meaning |
+|-------|------|---------|
+| `K=v` | Exact value | Must have key K with exact value v |
+| `K=*` | Must-have-any | Must have key K with any value |
+| `K=!` | Must-not-have | Must NOT have key K |
+| `K=?` | Unspecified | No constraint on key K |
+| (missing) | No constraint | Same as `K=?` |
 
-### 9. Canonical Form
-The canonical form of Tagged URNs is all lowercase, with tags sorted by keys alphabetically, and no final trailing semicolon.
+### 8. Value-less Tags
+- `tag` (no `=`) is parsed as `tag=*` (must-have-any)
+- `tag=*` is serialized as just `tag`
+- `tag=?` and `tag=!` are serialized explicitly
 
-### 10. Wildcard Support
-- Wildcard `*` is accepted only as tag value, not as tag key
-- When used as a tag value, `*` matches any value for that tag key
+### 9. Matching Semantics
 
-### 11. Value-less Tags (Existence Assertion)
-- Tags may be specified without a value: `cap:key1=value1;optimize;key2=value2`
-- A value-less tag like `optimize` is equivalent to `optimize=*` (wildcard)
-- This asserts that the tag exists but matches any value
-- Value-less tags are useful as flags or for checking tag existence
-- **Parsing:** `tag` (no `=`) is parsed as `tag=*`
-- **Serialization:** `tag=*` is serialized as just `tag` (no `=*`)
-- **Note:** `tag=` (explicit `=` with no value) is still an error - this is different from a value-less tag
+Per-tag truth table (works symmetrically on both sides):
 
-### 12. Matching Specificity
-As more tags are specified, URNs become more specific:
-- `cap:` matches any URN
-- `cap:prop=*` matches any URN that has a `prop` tag with any value
-- `cap:prop=1` matches only URNs that have `prop=1`, regardless of other tags
+| Instance | Pattern | Match? |
+|----------|---------|--------|
+| (none) | (none) or `?` | OK |
+| (none) | `!` | OK |
+| (none) | `*` | NO |
+| (none) | `v` | NO |
+| `?` | (any) | OK |
+| `!` | (none) or `?` or `!` | OK |
+| `!` | `*` or `v` | NO |
+| `*` | (none) or `?` or `*` or `v` | OK |
+| `*` | `!` | NO |
+| `v` | (none) or `?` or `*` or `v` | OK |
+| `v` | `!` | NO |
+| `v` | `w` (v≠w) | NO |
 
-### 13. Exact Tag Matching
-`cap:prop=1` matches only URNs that have `prop=1` irrespective of other tags present.
+### 10. Graded Specificity
 
-### 14. Subset Matching
-Only the tags specified in the criteria affect matching. URNs with extra tags not mentioned in the criteria still match if they satisfy all specified criteria.
+| Value Type | Score |
+|------------|-------|
+| Exact value (K=v) | 3 |
+| Must-have-any (K=*) | 2 |
+| Must-not-have (K=!) | 1 |
+| Unspecified (K=?) or missing | 0 |
 
-### 15. Duplicate Keys
-Duplicate keys in the same URN result in an error - last occurrence does not win.
+Total specificity = sum of all tag scores.
 
-### 16. UTF-8 Support
-Full UTF-8 character support within the allowed character set restrictions.
+Tie-breaking: Compare tuples `(exact_count, must_have_any_count, must_not_count)` lexicographically.
 
-### 17. Numeric Values
-- Tag keys cannot be pure numeric
-- Tag values can be pure numeric
+### 11. Duplicate Keys
+Duplicate keys result in an error.
 
-### 18. Empty Tagged URN
-`cap:` with no tags is valid and means "matches all URNs" (universal matcher).
+### 12. Numeric Keys
+Pure numeric keys are forbidden.
 
-### 19. Length Restrictions
-No explicit length restrictions, though practical limits exist based on URL and system constraints (typically ~2000 characters).
+### 13. Empty Tagged URN
+`cap:` with no tags is valid and represents no constraints.
 
-### 20. Wildcard Restrictions
-Asterisk (`*`) in tag keys is not valid. Asterisk is only valid in tag values to signify wildcard matching.
+## Error Codes
 
-### 21. Colon Treatment
-Forward slashes (`/`) and colons (`:`) are valid anywhere in tag components and treated as normal characters, except for the mandatory `cap:` prefix which is not part of the tag structure.
+| Code | Name | Description |
+|------|------|-------------|
+| 1 | INVALID_FORMAT | Empty or malformed URN |
+| 2 | EMPTY_TAG | Empty key or value component |
+| 3 | INVALID_CHARACTER | Disallowed character in key/value |
+| 4 | INVALID_TAG_FORMAT | Tag not in key=value format |
+| 5 | MISSING_PREFIX | URN does not start with prefix |
+| 6 | DUPLICATE_KEY | Same key appears twice |
+| 7 | NUMERIC_KEY | Key is purely numeric |
+| 8 | UNTERMINATED_QUOTE | Quoted value never closed |
+| 9 | INVALID_ESCAPE_SEQUENCE | Invalid escape in quoted value |
+| 10 | EMPTY_PREFIX | Prefix is empty |
+| 11 | PREFIX_MISMATCH | Prefixes don't match in comparison |
 
 ## Implementation Notes
 
-- All implementations must normalize input to lowercase
-- All implementations must sort tags alphabetically in canonical output
-- All implementations must handle trailing semicolons consistently
-- All implementations must validate character restrictions identically
-- All implementations must implement matching logic identically
-- All implementations must reject duplicate keys with appropriate error messages
-- All implementations must parse value-less tags as wildcard (`tag` → `tag=*`)
-- All implementations must serialize wildcard tags as value-less (`tag=*` → `tag`)
+- Normalize keys and unquoted values to lowercase
+- Preserve case in quoted values
+- Sort tags alphabetically in canonical output
+- Parse value-less tags as must-have-any (`tag` → `tag=*`)
+- Serialize must-have-any as value-less (`tag=*` → `tag`)
+- Serialize `?` and `!` explicitly
+- Implement graded specificity scoring
+- Allow `?` and `!` as unquoted values
