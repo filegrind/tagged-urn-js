@@ -743,6 +743,49 @@ function testValuelessNumericKeyStillRejected() {
   console.log('  ✓ Value-less numeric key still rejected');
 }
 
+function testWhitespaceInInputRejected() {
+  console.log('Testing whitespace in input rejected...');
+
+  // Leading whitespace fails hard
+  assertThrows(
+    () => TaggedUrn.fromString(' cap:op=test'),
+    ErrorCodes.WHITESPACE_IN_INPUT,
+    'Should reject leading whitespace'
+  );
+
+  // Trailing whitespace fails hard
+  assertThrows(
+    () => TaggedUrn.fromString('cap:op=test '),
+    ErrorCodes.WHITESPACE_IN_INPUT,
+    'Should reject trailing whitespace'
+  );
+
+  // Both leading and trailing whitespace fails hard
+  assertThrows(
+    () => TaggedUrn.fromString(' cap:op=test '),
+    ErrorCodes.WHITESPACE_IN_INPUT,
+    'Should reject leading and trailing whitespace'
+  );
+
+  // Tab and newline also count as whitespace
+  assertThrows(
+    () => TaggedUrn.fromString('\tcap:op=test'),
+    ErrorCodes.WHITESPACE_IN_INPUT,
+    'Should reject tab'
+  );
+  assertThrows(
+    () => TaggedUrn.fromString('cap:op=test\n'),
+    ErrorCodes.WHITESPACE_IN_INPUT,
+    'Should reject newline'
+  );
+
+  // Clean input works
+  const urn = TaggedUrn.fromString('cap:op=test');
+  assertEqual(urn.getTag('op'), 'test', 'Clean input should work');
+
+  console.log('  ✓ Whitespace in input rejected');
+}
+
 // Run tests
 function runTests() {
   console.log('Running Tagged URN JavaScript tests...\n');
@@ -793,6 +836,7 @@ function runTests() {
   testEmptyValueStillError();
   testValuelessTagCompatibility();
   testValuelessNumericKeyStillRejected();
+  testWhitespaceInInputRejected();
 
   console.log('\nOK All tests passed!');
 }

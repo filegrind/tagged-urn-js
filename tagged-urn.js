@@ -24,7 +24,8 @@ const ErrorCodes = {
   UNTERMINATED_QUOTE: 8,
   INVALID_ESCAPE_SEQUENCE: 9,
   EMPTY_PREFIX: 10,
-  PREFIX_MISMATCH: 11
+  PREFIX_MISMATCH: 11,
+  WHITESPACE_IN_INPUT: 12
 };
 
 // Parser states for state machine
@@ -228,6 +229,11 @@ class TaggedUrn {
   static fromString(s) {
     if (!s || typeof s !== 'string') {
       throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'Tagged URN cannot be empty');
+    }
+
+    // Fail hard on leading/trailing whitespace
+    if (s !== s.trim()) {
+      throw new TaggedUrnError(ErrorCodes.WHITESPACE_IN_INPUT, `Tagged URN has leading or trailing whitespace: '${s}'`);
     }
 
     // Find the prefix (everything before the first colon)
