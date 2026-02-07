@@ -521,62 +521,61 @@ class TaggedUrn {
   }
 
   /**
-   * Check if this URN (instance) matches a pattern based on tag compatibility
+   * Check if this URN (instance) satisfies the pattern's constraints.
+   * Equivalent to pattern.accepts(this).
    *
    * IMPORTANT: Both URNs must have the same prefix. Comparing URNs with
    * different prefixes is a programming error and will throw an error.
    *
-   * Per-tag matching semantics:
-   * | Pattern Form | Interpretation              | Instance Missing | Instance = v | Instance = x≠v |
-   * |--------------|-----------------------------|--------------------|--------------|----------------|
-   * | (no entry)   | no constraint               | OK match           | OK match     | OK match       |
-   * | K=?          | no constraint (explicit)    | OK                 | OK           | OK             |
-   * | K=!          | must-not-have               | OK                 | NO           | NO             |
-   * | K=*          | must-have, any value        | NO                 | OK           | OK             |
-   * | K=v          | must-have, exact value      | NO                 | OK           | NO             |
-   *
-   * Special values work symmetrically on both instance and pattern sides.
-   *
    * @param {TaggedUrn} pattern - The pattern URN to match against
-   * @returns {boolean} Whether this URN matches the pattern
+   * @returns {boolean} Whether this instance conforms to the pattern
    * @throws {TaggedUrnError} If prefixes don't match
    */
-  matches(pattern) {
+  conformsTo(pattern) {
     if (!pattern) {
       throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot match against null pattern');
     }
+    return TaggedUrn._checkMatch(this.tags, this.prefix, pattern.tags, pattern.prefix);
+  }
 
-    // First check prefix - must match exactly
-    if (this.prefix !== pattern.prefix) {
+  /**
+   * Check if this URN (pattern) accepts the given instance.
+   * Equivalent to instance.conformsTo(this).
+   *
+   * @param {TaggedUrn} instance - The instance URN to test
+   * @returns {boolean} Whether the pattern accepts the instance
+   * @throws {TaggedUrnError} If prefixes don't match
+   */
+  accepts(instance) {
+    if (!instance) {
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot match against null instance');
+    }
+    return TaggedUrn._checkMatch(instance.tags, instance.prefix, this.tags, this.prefix);
+  }
+
+  /**
+   * Core matching: does instance satisfy pattern's constraints?
+   * @private
+   */
+  static _checkMatch(instanceTags, instancePrefix, patternTags, patternPrefix) {
+    if (instancePrefix !== patternPrefix) {
       throw new TaggedUrnError(
         ErrorCodes.PREFIX_MISMATCH,
-        `Cannot compare URNs with different prefixes: '${this.prefix}' vs '${pattern.prefix}'`
+        `Cannot compare URNs with different prefixes: '${instancePrefix}' vs '${patternPrefix}'`
       );
     }
 
-    // Collect all keys from both instance and pattern
-    const allKeys = new Set([...Object.keys(this.tags), ...Object.keys(pattern.tags)]);
+    const allKeys = new Set([...Object.keys(instanceTags), ...Object.keys(patternTags)]);
 
     for (const key of allKeys) {
-      const inst = this.tags[key];
-      const patt = pattern.tags[key];
+      const inst = instanceTags[key];
+      const patt = patternTags[key];
 
       if (!valuesMatch(inst, patt)) {
         return false;
       }
     }
     return true;
-  }
-
-  /**
-   * Check if this URN can handle a request
-   *
-   * @param {TaggedUrn} request - The requested URN
-   * @returns {boolean} Whether this URN can handle the request
-   * @throws {TaggedUrnError} If prefixes don't match
-   */
-  canHandle(request) {
-    return this.matches(request);
   }
 
   /**
@@ -874,8 +873,8 @@ class TaggedUrnBuilder {
  */
 class UrnMatcher {
   /**
-   * Find the most specific URN that can handle a request
-   * All URNs must have the same prefix as the request
+   * Find the most specific URN that conforms to a request's constraints.
+   * URNs are instances (capabilities), request is the pattern (requirement).
    *
    * @param {TaggedUrn[]} urns - Array of available URNs
    * @param {TaggedUrn} request - The request to match
@@ -887,7 +886,7 @@ class UrnMatcher {
     let bestSpecificity = -1;
 
     for (const urn of urns) {
-      if (urn.canHandle(request)) {
+      if (urn.conformsTo(request)) {
         const specificity = urn.specificity();
         if (specificity > bestSpecificity) {
           best = urn;
@@ -900,8 +899,8 @@ class UrnMatcher {
   }
 
   /**
-   * Find all URNs that can handle a request, sorted by specificity
-   * All URNs must have the same prefix as the request
+   * Find all URNs that conform to a request's constraints, sorted by specificity.
+   * URNs are instances (capabilities), request is the pattern (requirement).
    *
    * @param {TaggedUrn[]} urns - Array of available URNs
    * @param {TaggedUrn} request - The request to match
@@ -909,17 +908,17 @@ class UrnMatcher {
    * @throws {TaggedUrnError} If prefixes don't match
    */
   static findAllMatches(urns, request) {
-    const matches = [];
+    const results = [];
     for (const urn of urns) {
-      if (urn.canHandle(request)) {
-        matches.push(urn);
+      if (urn.conformsTo(request)) {
+        results.push(urn);
       }
     }
 
     // Sort by specificity (most specific first)
-    matches.sort((a, b) => b.specificity() - a.specificity());
+    results.sort((a, b) => b.specificity() - a.specificity());
 
-    return matches;
+    return results;
   }
 
   /**

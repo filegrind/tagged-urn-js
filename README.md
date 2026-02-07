@@ -37,7 +37,7 @@ const built = new TaggedUrnBuilder()
 
 // Matching
 const request = TaggedUrn.fromString('cap:op=generate');
-console.log(urn.matches(request)); // true
+console.log(urn.conformsTo(request)); // true
 
 // Find best match
 const urns = [
@@ -63,7 +63,8 @@ console.log(best.toString()); // "cap:ext=pdf;op=generate" (most specific)
 - `hasTag(key, value)` - Check if tag exists with value
 - `withTag(key, value)` - Add/update tag (returns new instance)
 - `withoutTag(key)` - Remove tag (returns new instance)
-- `matches(other)` - Check if this URN matches another
+- `conformsTo(pattern)` - Check if this URN conforms to a pattern
+- `accepts(instance)` - Check if this URN (as pattern) accepts an instance
 - `canHandle(request)` - Check if this URN can handle a request
 - `specificity()` - Get specificity score for matching
 - `isMoreSpecificThan(other)` - Compare specificity

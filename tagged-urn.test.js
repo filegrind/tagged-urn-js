@@ -72,8 +72,8 @@ function testCaseInsensitive() {
   assert(cap1.hasTag('OP', 'generate'), 'Should match with case-insensitive comparison');
 
   // Matching should work case-insensitively
-  assert(cap1.matches(cap2), 'Should match case-insensitively');
-  assert(cap2.matches(cap1), 'Should match case-insensitively');
+  assert(cap1.conformsTo(cap2), 'Should match case-insensitively');
+  assert(cap2.conformsTo(cap1), 'Should match case-insensitively');
 
   console.log('  ✓ Case insensitive behavior');
 }
@@ -116,8 +116,8 @@ function testTrailingSemicolonEquivalence() {
   assertEqual(cap1.toString(), cap2.toString(), 'Should have same canonical form');
 
   // They should match each other
-  assert(cap1.matches(cap2), 'Should match each other');
-  assert(cap2.matches(cap1), 'Should match each other');
+  assert(cap1.conformsTo(cap2), 'Should match each other');
+  assert(cap2.conformsTo(cap1), 'Should match each other');
 
   console.log('  ✓ Trailing semicolon equivalence');
 }
@@ -140,19 +140,19 @@ function testTagMatching() {
 
   // Exact match
   const request1 = TaggedUrn.fromString('cap:op=generate;ext=pdf;target=thumbnail');
-  assert(cap.matches(request1), 'Should match exact request');
+  assert(cap.conformsTo(request1), 'Should match exact request');
 
   // Subset match
   const request2 = TaggedUrn.fromString('cap:op=generate');
-  assert(cap.matches(request2), 'Should match subset request');
+  assert(cap.conformsTo(request2), 'Should match subset request');
 
   // Wildcard request should match specific cap
   const request3 = TaggedUrn.fromString('cap:ext=*');
-  assert(cap.matches(request3), 'Should match wildcard request');
+  assert(cap.conformsTo(request3), 'Should match wildcard request');
 
   // No match - conflicting value
   const request4 = TaggedUrn.fromString('cap:op=extract');
-  assert(!cap.matches(request4), 'Should not match conflicting value');
+  assert(!cap.conformsTo(request4), 'Should not match conflicting value');
 
   console.log('  ✓ Tag matching');
 }
@@ -167,20 +167,20 @@ function testMissingTagHandling() {
 
   // Pattern with tag that instance doesn't have: NO MATCH
   const pattern1 = TaggedUrn.fromString('cap:ext=pdf');
-  assert(!instance.matches(pattern1), 'Should NOT match when instance missing pattern-required tag');
+  assert(!instance.conformsTo(pattern1), 'Should NOT match when instance missing pattern-required tag');
 
   // Pattern missing tag = no constraint: MATCH
   const instance2 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const pattern2 = TaggedUrn.fromString('cap:op=generate');
-  assert(instance2.matches(pattern2), 'Should match subset pattern');
+  assert(instance2.conformsTo(pattern2), 'Should match subset pattern');
 
   // To match any value of a tag, use explicit ?
   const pattern3 = TaggedUrn.fromString('cap:ext=?');
-  assert(instance.matches(pattern3), 'Pattern ext=? should match instance without ext');
+  assert(instance.conformsTo(pattern3), 'Pattern ext=? should match instance without ext');
 
   // * means must-have-any - instance must have the tag
   const pattern4 = TaggedUrn.fromString('cap:ext=*');
-  assert(!instance.matches(pattern4), 'Pattern ext=* should NOT match when instance missing ext');
+  assert(!instance.conformsTo(pattern4), 'Pattern ext=* should NOT match when instance missing ext');
 
   console.log('  ✓ Missing tag handling');
 }
@@ -331,13 +331,13 @@ function testEmptyTaggedUrn() {
   const specific = TaggedUrn.fromString('cap:op=generate;ext=pdf');
 
   // Empty instance vs specific pattern: NO MATCH
-  assert(!empty.matches(specific), 'Empty instance should NOT match pattern with requirements');
+  assert(!empty.conformsTo(specific), 'Empty instance should NOT match pattern with requirements');
 
   // Specific instance vs empty pattern: MATCH
-  assert(specific.matches(empty), 'Instance should match empty pattern');
+  assert(specific.conformsTo(empty), 'Instance should match empty pattern');
 
   // Empty instance vs empty pattern: MATCH
-  assert(empty.matches(empty), 'Should match itself');
+  assert(empty.conformsTo(empty), 'Should match itself');
 
   console.log('  ✓ Empty tagged URN');
 }
@@ -439,7 +439,7 @@ function testMatchingSemantics_Test1_ExactMatch() {
   // Result:  MATCH
   const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const request = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assert(cap.matches(request), 'Test 1: Exact match should succeed');
+  assert(cap.conformsTo(request), 'Test 1: Exact match should succeed');
   console.log('  ✓ Test 1: Exact match');
 }
 
@@ -453,11 +453,11 @@ function testMatchingSemantics_Test2_InstanceMissingTag() {
   // NEW SEMANTICS: Missing tag in instance means it doesn't exist.
   const instance = TaggedUrn.fromString('cap:op=generate');
   const pattern = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assert(!instance.matches(pattern), 'Test 2: Instance missing tag should NOT match when pattern requires it');
+  assert(!instance.conformsTo(pattern), 'Test 2: Instance missing tag should NOT match when pattern requires it');
 
   // To accept any ext (or missing), use pattern with ext=?
   const patternOptional = TaggedUrn.fromString('cap:op=generate;ext=?');
-  assert(instance.matches(patternOptional), 'Pattern with ext=? should match instance without ext');
+  assert(instance.conformsTo(patternOptional), 'Pattern with ext=? should match instance without ext');
   console.log('  ✓ Test 2: Instance missing tag');
 }
 
@@ -469,7 +469,7 @@ function testMatchingSemantics_Test3_CapHasExtraTag() {
   // Result:  MATCH (request doesn't constrain version)
   const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf;version=2');
   const request = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assert(cap.matches(request), 'Test 3: Cap with extra tag should match');
+  assert(cap.conformsTo(request), 'Test 3: Cap with extra tag should match');
   console.log('  ✓ Test 3: Cap has extra tag');
 }
 
@@ -481,7 +481,7 @@ function testMatchingSemantics_Test4_RequestHasWildcard() {
   // Result:  MATCH (request accepts any ext)
   const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const request = TaggedUrn.fromString('cap:op=generate;ext=*');
-  assert(cap.matches(request), 'Test 4: Request wildcard should match');
+  assert(cap.conformsTo(request), 'Test 4: Request wildcard should match');
   console.log('  ✓ Test 4: Request has wildcard');
 }
 
@@ -493,7 +493,7 @@ function testMatchingSemantics_Test5_CapHasWildcard() {
   // Result:  MATCH (cap handles any ext)
   const cap = TaggedUrn.fromString('cap:op=generate;ext=*');
   const request = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assert(cap.matches(request), 'Test 5: Cap wildcard should match');
+  assert(cap.conformsTo(request), 'Test 5: Cap wildcard should match');
   console.log('  ✓ Test 5: Cap has wildcard');
 }
 
@@ -505,7 +505,7 @@ function testMatchingSemantics_Test6_ValueMismatch() {
   // Result:  NO MATCH
   const cap = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const request = TaggedUrn.fromString('cap:op=generate;ext=docx');
-  assert(!cap.matches(request), 'Test 6: Value mismatch should not match');
+  assert(!cap.conformsTo(request), 'Test 6: Value mismatch should not match');
   console.log('  ✓ Test 6: Value mismatch');
 }
 
@@ -519,11 +519,11 @@ function testMatchingSemantics_Test7_PatternHasExtraTag() {
   // NEW SEMANTICS: Pattern K=v requires instance to have K=v
   const instance = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:binary"');
   const pattern = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:binary";ext=wav');
-  assert(!instance.matches(pattern), 'Test 7: Instance missing ext should NOT match when pattern requires ext=wav');
+  assert(!instance.conformsTo(pattern), 'Test 7: Instance missing ext should NOT match when pattern requires ext=wav');
 
   // Instance vs pattern that doesn't constrain ext: MATCH
   const patternNoExt = TaggedUrn.fromString('cap:op=generate_thumbnail;out="media:binary"');
-  assert(instance.matches(patternNoExt), 'Should match pattern without ext constraint');
+  assert(instance.conformsTo(patternNoExt), 'Should match pattern without ext constraint');
   console.log('  ✓ Test 7: Pattern has extra tag');
 }
 
@@ -537,12 +537,12 @@ function testMatchingSemantics_Test8_EmptyPatternMatchesAnything() {
   // NEW SEMANTICS: Empty pattern = no constraints = matches any instance
   const instance = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const emptyPattern = TaggedUrn.fromString('cap:');
-  assert(instance.matches(emptyPattern), 'Test 8: Any instance should match empty pattern');
+  assert(instance.conformsTo(emptyPattern), 'Test 8: Any instance should match empty pattern');
 
   // Empty instance vs pattern with requirements: NO MATCH
   const emptyInstance = TaggedUrn.fromString('cap:');
   const pattern = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  assert(!emptyInstance.matches(pattern), 'Empty instance should NOT match pattern with requirements');
+  assert(!emptyInstance.conformsTo(pattern), 'Empty instance should NOT match pattern with requirements');
   console.log('  ✓ Test 8: Empty pattern matches anything');
 }
 
@@ -556,12 +556,12 @@ function testMatchingSemantics_Test9_CrossDimensionConstraints() {
   // NEW SEMANTICS: Pattern K=v requires instance to have K=v
   const instance = TaggedUrn.fromString('cap:op=generate');
   const pattern = TaggedUrn.fromString('cap:ext=pdf');
-  assert(!instance.matches(pattern), 'Test 9: Instance without ext should NOT match pattern requiring ext');
+  assert(!instance.conformsTo(pattern), 'Test 9: Instance without ext should NOT match pattern requiring ext');
 
   // Instance with ext vs pattern with different tag only: MATCH
   const instance2 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
   const pattern2 = TaggedUrn.fromString('cap:ext=pdf');
-  assert(instance2.matches(pattern2), 'Instance with ext=pdf should match pattern requiring ext=pdf');
+  assert(instance2.conformsTo(pattern2), 'Instance with ext=pdf should match pattern requiring ext=pdf');
   console.log('  ✓ Test 9: Cross-dimension constraints');
 }
 
@@ -635,9 +635,9 @@ function testValuelessTagMatching() {
   const requestDocx = TaggedUrn.fromString('cap:op=generate;ext=docx');
   const requestAny = TaggedUrn.fromString('cap:op=generate;ext=anything');
 
-  assert(urn.matches(requestPdf), 'Should match pdf');
-  assert(urn.matches(requestDocx), 'Should match docx');
-  assert(urn.matches(requestAny), 'Should match anything');
+  assert(urn.conformsTo(requestPdf), 'Should match pdf');
+  assert(urn.conformsTo(requestDocx), 'Should match docx');
+  assert(urn.conformsTo(requestAny), 'Should match anything');
   console.log('  ✓ Value-less tag matching');
 }
 
@@ -650,13 +650,13 @@ function testValuelessTagInPattern() {
   const instanceMissing = TaggedUrn.fromString('cap:op=generate');
 
   // NEW SEMANTICS: K=* (valueless tag) means must-have-any
-  assert(instancePdf.matches(pattern), 'Should match pdf instance');
-  assert(instanceDocx.matches(pattern), 'Should match docx instance');
-  assert(!instanceMissing.matches(pattern), 'Should NOT match instance without ext');
+  assert(instancePdf.conformsTo(pattern), 'Should match pdf instance');
+  assert(instanceDocx.conformsTo(pattern), 'Should match docx instance');
+  assert(!instanceMissing.conformsTo(pattern), 'Should NOT match instance without ext');
 
   // To accept missing ext, use ? instead
   const patternOptional = TaggedUrn.fromString('cap:op=generate;ext=?');
-  assert(instanceMissing.matches(patternOptional), 'Instance should match pattern with ext=?');
+  assert(instanceMissing.conformsTo(patternOptional), 'Instance should match pattern with ext=?');
   console.log('  ✓ Value-less tag in pattern');
 }
 
