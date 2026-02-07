@@ -416,6 +416,29 @@ class TaggedUrn {
   }
 
   /**
+   * Parse a URN string and return its canonical form.
+   *
+   * @param {string} urnStr - The URN string to canonicalize
+   * @returns {string} The canonical string representation
+   * @throws {TaggedUrnError} If parsing fails
+   */
+  static canonical(urnStr) {
+    return TaggedUrn.fromString(urnStr).toString();
+  }
+
+  /**
+   * Parse a URN string and return its canonical form, or null if input is null/undefined.
+   *
+   * @param {string|null|undefined} urnStr - The URN string to canonicalize
+   * @returns {string|null} The canonical string representation, or null
+   * @throws {TaggedUrnError} If parsing fails (for non-null input)
+   */
+  static canonicalOption(urnStr) {
+    if (urnStr === null || urnStr === undefined) return null;
+    return TaggedUrn.fromString(urnStr).toString();
+  }
+
+  /**
    * Get the prefix of this tagged URN
    * @returns {string} The prefix
    */
@@ -502,6 +525,9 @@ class TaggedUrn {
    * @returns {TaggedUrn} A new TaggedUrn instance with the tag added/updated
    */
   withTag(key, value) {
+    if (value === '' || value === undefined || value === null) {
+      throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, `empty value for key '${key}' (use '*' for wildcard)`);
+    }
     const newTags = { ...this.tags };
     newTags[key.toLowerCase()] = value;
     return new TaggedUrn(this.prefix, newTags, true);
@@ -551,6 +577,32 @@ class TaggedUrn {
       throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot match against null instance');
     }
     return TaggedUrn._checkMatch(instance.tags, instance.prefix, this.tags, this.prefix);
+  }
+
+  /**
+   * Check if this URN (instance) satisfies the pattern string's constraints.
+   * Parses the pattern string then calls conformsTo().
+   *
+   * @param {string} patternStr - The pattern URN string to match against
+   * @returns {boolean} Whether this instance conforms to the pattern
+   * @throws {TaggedUrnError} If parsing fails or prefixes don't match
+   */
+  conformsToStr(patternStr) {
+    const pattern = TaggedUrn.fromString(patternStr);
+    return this.conformsTo(pattern);
+  }
+
+  /**
+   * Check if this URN (pattern) accepts the given instance string.
+   * Parses the instance string then calls accepts().
+   *
+   * @param {string} instanceStr - The instance URN string to test
+   * @returns {boolean} Whether the pattern accepts the instance
+   * @throws {TaggedUrnError} If parsing fails or prefixes don't match
+   */
+  acceptsStr(instanceStr) {
+    const instance = TaggedUrn.fromString(instanceStr);
+    return this.accepts(instance);
   }
 
   /**
@@ -841,6 +893,9 @@ class TaggedUrnBuilder {
    * @returns {TaggedUrnBuilder} This builder instance for chaining
    */
   tag(key, value) {
+    if (value === '' || value === undefined || value === null) {
+      throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, `empty value for key '${key}' (use '*' for wildcard)`);
+    }
     this.tags[key.toLowerCase()] = value;
     return this;
   }
