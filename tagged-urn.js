@@ -155,42 +155,6 @@ function valuesMatch(inst, patt) {
 }
 
 /**
- * Check if two pattern values are compatible (could match the same instance)
- */
-function valuesCompatible(v1, v2) {
-  // Either missing or ? means no constraint - compatible with anything
-  if (v1 === undefined || v2 === undefined) {
-    return true;
-  }
-  if (v1 === '?' || v2 === '?') {
-    return true;
-  }
-
-  // Both are ! - compatible (both want absent)
-  if (v1 === '!' && v2 === '!') {
-    return true;
-  }
-
-  // One is ! and other is value or * - NOT compatible
-  if (v1 === '!' || v2 === '!') {
-    return false;
-  }
-
-  // Both are * - compatible
-  if (v1 === '*' && v2 === '*') {
-    return true;
-  }
-
-  // One is * and other is value - compatible (value matches *)
-  if (v1 === '*' || v2 === '*') {
-    return true;
-  }
-
-  // Both are specific values - must be equal
-  return v1 === v2;
-}
-
-/**
  * Tagged URN implementation with flat, ordered tags and configurable prefix
  */
 class TaggedUrn {
@@ -710,57 +674,7 @@ class TaggedUrn {
       );
     }
 
-    // Then check if they're compatible
-    if (!this.isCompatibleWith(other)) {
-      return false;
-    }
-
     return this.specificity() > other.specificity();
-  }
-
-  /**
-   * Check if this URN is compatible with another
-   *
-   * Two URNs are compatible if they have the same prefix and can potentially match
-   * the same instances (i.e., there exists at least one instance that both patterns accept)
-   *
-   * Compatibility rules:
-   * - K=v and K=w (v≠w): NOT compatible (no instance can match both exact values)
-   * - K=! and K=v/K=*: NOT compatible (one requires absent, other requires present)
-   * - K=v and K=*: compatible (instance with K=v matches both)
-   * - K=? is compatible with anything (no constraint)
-   * - Missing entry is compatible with anything (no constraint)
-   *
-   * @param {TaggedUrn} other - The other URN to check compatibility with
-   * @returns {boolean} Whether the URNs are compatible
-   * @throws {TaggedUrnError} If prefixes don't match
-   */
-  isCompatibleWith(other) {
-    if (!other) {
-      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot check compatibility with null URN');
-    }
-
-    // First check prefix
-    if (this.prefix !== other.prefix) {
-      throw new TaggedUrnError(
-        ErrorCodes.PREFIX_MISMATCH,
-        `Cannot compare URNs with different prefixes: '${this.prefix}' vs '${other.prefix}'`
-      );
-    }
-
-    // Get all unique tag keys from both URNs
-    const allKeys = new Set([...Object.keys(this.tags), ...Object.keys(other.tags)]);
-
-    for (const key of allKeys) {
-      const v1 = this.tags[key];
-      const v2 = other.tags[key];
-
-      if (!valuesCompatible(v1, v2)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**
@@ -988,7 +902,7 @@ class UrnMatcher {
   static areCompatible(urns1, urns2) {
     for (const u1 of urns1) {
       for (const u2 of urns2) {
-        if (u1.isCompatibleWith(u2)) {
+        if (u1.accepts(u2) || u2.accepts(u1)) {
           return true;
         }
       }

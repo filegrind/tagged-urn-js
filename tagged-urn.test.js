@@ -415,19 +415,24 @@ function test525_builder_preserves_case() {
 // COMPATIBILITY AND MATCHING (TEST526-TEST527)
 // ============================================================================
 
-// TEST526: Verify two URNs can be checked for compatibility
+// TEST526: Verify directional accepts for URN matching
 function test526_compatibility() {
+  // General pattern accepts specific instance
+  const general = TaggedUrn.fromString('cap:op=generate');
+  const specific = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  assert(general.accepts(specific), 'General pattern accepts specific instance');
+  assert(!specific.accepts(general), 'Specific does not accept general');
+
+  // Wildcard pattern accepts any value
+  const wildcard = TaggedUrn.fromString('cap:op=generate;format=*');
+  const withFormat = TaggedUrn.fromString('cap:op=generate;format=json');
+  assert(wildcard.accepts(withFormat), 'Wildcard accepts specific value');
+
+  // Different op values: neither accepts the other
   const cap1 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  const cap2 = TaggedUrn.fromString('cap:op=generate;format=*');
   const cap3 = TaggedUrn.fromString('cap:image;op=extract');
-
-  assert(cap1.isCompatibleWith(cap2), 'Should be compatible');
-  assert(cap2.isCompatibleWith(cap1), 'Should be compatible (symmetric)');
-  assert(!cap1.isCompatibleWith(cap3), 'Should not be compatible');
-
-  const cap4 = TaggedUrn.fromString('cap:op=generate');
-  assert(cap1.isCompatibleWith(cap4), 'Should be compatible with missing tags');
-  assert(cap4.isCompatibleWith(cap1), 'Should be compatible with missing tags (symmetric)');
+  assert(!cap1.accepts(cap3), 'Different op should not accept');
+  assert(!cap3.accepts(cap1), 'Different op should not accept (reverse)');
 }
 
 // TEST527: Verify UrnMatcher finds best match among candidates
@@ -724,9 +729,9 @@ function test552_matching_different_prefixes_error() {
   );
 
   assertThrows(
-    () => urn1.isCompatibleWith(urn2),
+    () => urn1.accepts(urn2),
     ErrorCodes.PREFIX_MISMATCH,
-    'isCompatibleWith with different prefixes should throw'
+    'accepts with different prefixes should throw'
   );
 
   assertThrows(
@@ -854,15 +859,18 @@ function test563_empty_value_still_error() {
   );
 }
 
-// TEST564: Valueless tags compatible with any value
+// TEST564: Valueless tags (wildcard) accept any specific value
 function test564_valueless_tag_compatibility() {
-  const urn1 = TaggedUrn.fromString('cap:op=generate;ext');
-  const urn2 = TaggedUrn.fromString('cap:op=generate;ext=pdf');
-  const urn3 = TaggedUrn.fromString('cap:op=generate;ext=docx');
+  const wildcard = TaggedUrn.fromString('cap:op=generate;ext');
+  const pdf = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  const docx = TaggedUrn.fromString('cap:op=generate;ext=docx');
 
-  assert(urn1.isCompatibleWith(urn2), 'Should be compatible with pdf');
-  assert(urn1.isCompatibleWith(urn3), 'Should be compatible with docx');
-  assert(!urn2.isCompatibleWith(urn3), 'Specific values should not be compatible');
+  // Wildcard ext accepts both pdf and docx instances
+  assert(wildcard.accepts(pdf), 'Wildcard ext should accept pdf');
+  assert(wildcard.accepts(docx), 'Wildcard ext should accept docx');
+  // Specific values: pdf does not accept docx and vice versa
+  assert(!pdf.accepts(docx), 'pdf should not accept docx');
+  assert(!docx.accepts(pdf), 'docx should not accept pdf');
 }
 
 // TEST565: Purely numeric keys still rejected for valueless tags
@@ -1081,7 +1089,7 @@ function test575_serialization_round_trip_special_values() {
   }
 }
 
-// TEST576: ! is incompatible with * and specific values, ? compatible with everything
+// TEST576: Bidirectional accepts with special values
 function test576_compatibility_with_special_values() {
   const mustNot = TaggedUrn.fromString('cap:ext=!');
   const mustHave = TaggedUrn.fromString('cap:ext=*');
@@ -1089,20 +1097,28 @@ function test576_compatibility_with_special_values() {
   const unspecified = TaggedUrn.fromString('cap:ext=?');
   const missing = TaggedUrn.fromString('cap:');
 
-  assert(!mustNot.isCompatibleWith(mustHave), '! incompatible with *');
-  assert(!mustNot.isCompatibleWith(specific), '! incompatible with specific');
-  assert(mustNot.isCompatibleWith(unspecified), '! compatible with ?');
-  assert(mustNot.isCompatibleWith(missing), '! compatible with missing');
-  assert(mustNot.isCompatibleWith(mustNot), '! compatible with !');
+  // ! neither accepts nor is accepted by * or specific
+  assert(!mustNot.accepts(mustHave) && !mustHave.accepts(mustNot), '! and * do not accept each other');
+  assert(!mustNot.accepts(specific) && !specific.accepts(mustNot), '! and specific do not accept each other');
+  // ! accepted by ? (unspecified accepts anything)
+  assert(unspecified.accepts(mustNot), '? accepts !');
+  assert(mustNot.accepts(unspecified), '! accepts ? (? is don\'t-care)');
+  // ! and missing: missing pattern has no constraint
+  assert(missing.accepts(mustNot), 'empty pattern accepts !');
+  // ! and !: mutual acceptance
+  assert(mustNot.accepts(mustNot), '! accepts !');
 
-  assert(mustHave.isCompatibleWith(specific), '* compatible with specific');
-  assert(mustHave.isCompatibleWith(mustHave), '* compatible with *');
+  // * accepts specific
+  assert(mustHave.accepts(specific), '* accepts specific');
+  // * accepts *
+  assert(mustHave.accepts(mustHave), '* accepts *');
 
-  assert(unspecified.isCompatibleWith(mustNot), '? compatible with !');
-  assert(unspecified.isCompatibleWith(mustHave), '? compatible with *');
-  assert(unspecified.isCompatibleWith(specific), '? compatible with specific');
-  assert(unspecified.isCompatibleWith(unspecified), '? compatible with ?');
-  assert(unspecified.isCompatibleWith(missing), '? compatible with missing');
+  // ? accepts everything
+  assert(unspecified.accepts(mustNot), '? accepts !');
+  assert(unspecified.accepts(mustHave), '? accepts *');
+  assert(unspecified.accepts(specific), '? accepts specific');
+  assert(unspecified.accepts(unspecified), '? accepts ?');
+  assert(unspecified.accepts(missing), '? accepts missing');
 }
 
 // TEST577: Verify graded specificity with special values

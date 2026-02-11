@@ -65,10 +65,8 @@ console.log(best.toString()); // "cap:ext=pdf;op=generate" (most specific)
 - `withoutTag(key)` - Remove tag (returns new instance)
 - `conformsTo(pattern)` - Check if this URN conforms to a pattern
 - `accepts(instance)` - Check if this URN (as pattern) accepts an instance
-- `canHandle(request)` - Check if this URN can handle a request
 - `specificity()` - Get specificity score for matching
 - `isMoreSpecificThan(other)` - Compare specificity
-- `isCompatibleWith(other)` - Check compatibility
 - `equals(other)` - Check equality
 
 ### TaggedUrnBuilder Class
