@@ -1338,3 +1338,122 @@ if (require.main === module) {
 }
 
 module.exports = { runTests };
+
+// =========================================================================
+// ORDER-THEORETIC RELATIONS & BUILDER TESTS (TEST578-595)
+// =========================================================================
+
+// TEST578: Equivalent URNs with identical tag sets
+(() => {
+  const a = TaggedUrn.fromString('cap:op=generate;ext=pdf');
+  const b = TaggedUrn.fromString('cap:ext=pdf;op=generate');
+  assert(a.isEquivalent(b), 'TEST578: Equivalent should be true');
+  assert(b.isEquivalent(a), 'TEST578: Equivalent should be symmetric');
+})();
+
+// TEST579: Non-equivalent URNs where one is more specific
+(() => {
+  const general = TaggedUrn.fromString('media:bytes');
+  const specific = TaggedUrn.fromString('media:pdf;bytes');
+  assert(!general.isEquivalent(specific), 'TEST579: Should not be equivalent');
+  assert(!specific.isEquivalent(general), 'TEST579: Should not be equivalent (reverse)');
+})();
+
+// TEST580: Comparable URNs on the same specialization chain
+(() => {
+  const general = TaggedUrn.fromString('media:bytes');
+  const specific = TaggedUrn.fromString('media:pdf;bytes');
+  assert(general.isComparable(specific), 'TEST580: Should be comparable');
+  assert(specific.isComparable(general), 'TEST580: Should be comparable (symmetric)');
+})();
+
+// TEST581: Incomparable URNs in different branches
+(() => {
+  const pdf = TaggedUrn.fromString('media:pdf;bytes');
+  const txt = TaggedUrn.fromString('media:txt;textable');
+  assert(!pdf.isComparable(txt), 'TEST581: Should not be comparable');
+  assert(!txt.isComparable(pdf), 'TEST581: Should not be comparable (reverse)');
+})();
+
+// TEST582: Equivalent implies comparable
+(() => {
+  const a = TaggedUrn.fromString('cap:op=test;ext=pdf');
+  const b = TaggedUrn.fromString('cap:op=test;ext=pdf');
+  assert(a.isEquivalent(b), 'TEST582: Should be equivalent');
+  assert(a.isComparable(b), 'TEST582: Equivalent implies comparable');
+})();
+
+// TEST583: Prefix mismatch errors
+(() => {
+  const cap = TaggedUrn.fromString('cap:op=test');
+  const media = TaggedUrn.fromString('media:bytes');
+  assertThrowsAny(() => cap.isEquivalent(media), 'TEST583: Prefix mismatch should error');
+  assertThrowsAny(() => cap.isComparable(media), 'TEST583: Prefix mismatch should error');
+})();
+
+// TEST587: Builder fluent API
+(() => {
+  const urn = new TaggedUrnBuilder('cap')
+    .tag('op', 'generate')
+    .tag('target', 'thumbnail')
+    .tag('format', 'pdf')
+    .build();
+  assertEqual(urn.getTag('op'), 'generate', 'TEST587: op tag');
+  assertEqual(urn.getTag('target'), 'thumbnail', 'TEST587: target tag');
+  assertEqual(urn.getTag('format'), 'pdf', 'TEST587: format tag');
+})();
+
+// TEST590: Builder empty build error
+(() => {
+  assertThrowsAny(() => new TaggedUrnBuilder('cap').build(), 'TEST590: Empty builder should error');
+})();
+
+// TEST591: Builder with single tag
+(() => {
+  const urn = new TaggedUrnBuilder('cap').tag('type', 'utility').build();
+  assertEqual(urn.toString(), 'cap:type=utility', 'TEST591: toString');
+  assertEqual(urn.specificity(), 3, 'TEST591: specificity');
+})();
+
+// TEST593: Builder with wildcards
+(() => {
+  const urn = new TaggedUrnBuilder('cap')
+    .tag('op', 'convert')
+    .soloTag('ext')
+    .soloTag('quality')
+    .build();
+  assertEqual(urn.toString(), 'cap:ext;op=convert;quality', 'TEST593: toString with wildcards');
+  assertEqual(urn.specificity(), 7, 'TEST593: specificity');
+})();
+
+// TEST595: Builder matching
+(() => {
+  const specificInstance = new TaggedUrnBuilder('cap')
+    .tag('op', 'generate')
+    .tag('target', 'thumbnail')
+    .tag('format', 'pdf')
+    .build();
+  const generalPattern = new TaggedUrnBuilder('cap').tag('op', 'generate').build();
+  const wildcardPattern = new TaggedUrnBuilder('cap')
+    .tag('op', 'generate')
+    .tag('target', 'thumbnail')
+    .soloTag('ext')
+    .build();
+  
+  assert(specificInstance.conformsTo(generalPattern), 'TEST595: Should conform to general');
+  assert(!specificInstance.conformsTo(wildcardPattern), 'TEST595: Should not conform to wildcard pattern');
+  assertEqual(specificInstance.specificity(), 9, 'TEST595: specific specificity');
+  assertEqual(generalPattern.specificity(), 3, 'TEST595: general specificity');
+  assertEqual(wildcardPattern.specificity(), 8, 'TEST595: wildcard specificity');
+})();
+
+// Builder rejects empty value
+(() => {
+  assertThrows(
+    () => new TaggedUrnBuilder('cap').tag('key', ''),
+    ErrorCodes.EMPTY_TAG,
+    'Builder should reject empty value'
+  );
+})();
+
+console.log('All tests passed!');

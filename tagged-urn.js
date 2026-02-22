@@ -678,6 +678,44 @@ class TaggedUrn {
   }
 
   /**
+   * Check if two URNs are equivalent (identical tag sets)
+   * a.isEquivalent(b) ≡ a.accepts(b) && b.accepts(a)
+   */
+  isEquivalent(other) {
+    if (!other) {
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot compare against null URN');
+    }
+    return this.accepts(other) && other.accepts(this);
+  }
+
+  /**
+   * Check if two URNs are comparable (one is a specialization of the other)
+   * a.isComparable(b) ≡ a.accepts(b) || b.accepts(a)
+   */
+  isComparable(other) {
+    if (!other) {
+      throw new TaggedUrnError(ErrorCodes.INVALID_FORMAT, 'cannot compare against null URN');
+    }
+    return this.accepts(other) || other.accepts(this);
+  }
+
+  /**
+   * String variant of isEquivalent
+   */
+  isEquivalentStr(otherStr) {
+    const other = TaggedUrn.fromString(otherStr);
+    return this.isEquivalent(other);
+  }
+
+  /**
+   * String variant of isComparable
+   */
+  isComparableStr(otherStr) {
+    const other = TaggedUrn.fromString(otherStr);
+    return this.isComparable(other);
+  }
+
+  /**
    * Create a new URN with a specific tag set to wildcard
    *
    * @param {string} key - The tag key to set to wildcard
@@ -811,6 +849,16 @@ class TaggedUrnBuilder {
       throw new TaggedUrnError(ErrorCodes.EMPTY_TAG, `empty value for key '${key}' (use '*' for wildcard)`);
     }
     this.tags[key.toLowerCase()] = value;
+    return this;
+  }
+
+  /**
+   * Add a tag with wildcard value (*)
+   * @param {string} key - The tag key
+   * @returns {TaggedUrnBuilder} This builder for chaining
+   */
+  soloTag(key) {
+    this.tags[key.toLowerCase()] = '*';
     return this;
   }
 
